@@ -1,0 +1,145 @@
+@php
+    $navItems = [
+        ['route' => 'dashboard', 'icon' => 'squares-2x2', 'label' => 'Foco', 'active' => ['dashboard', 'trabalho.*']],
+        ['route' => 'projetos', 'icon' => 'folder', 'label' => 'Projetos', 'active' => ['projetos*']],
+        ['route' => 'principios', 'icon' => 'scale', 'label' => 'Princípios', 'active' => ['principios*']],
+        ['route' => 'estudos', 'icon' => 'code-bracket-square', 'label' => 'Estudos', 'active' => ['estudos*']],
+        ['route' => 'conceitos', 'icon' => 'light-bulb', 'label' => 'Conceitos', 'active' => ['conceitos*']],
+        ['route' => 'referencias', 'icon' => 'book-open', 'label' => 'Recursos', 'active' => ['referencias*']],
+    ];
+@endphp
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>{{ $title ?? config('app.name') }}</title>
+
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    {{-- Aplica o tema salvo antes do CSS carregar, evitando flash do tema errado. Padrão: dark. --}}
+    <script>
+        if ((localStorage.getItem('theme') ?? 'dark') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+
+    @fonts
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    @livewireStyles
+</head>
+
+<body class="h-screen overflow-hidden flex flex-col bg-background text-on-background antialiased">
+
+<div class="pointer-events-none fixed inset-0 -z-10 hidden bg-[radial-gradient(ellipse_at_top_right,var(--color-primary-container),transparent_60%)] opacity-20 dark:block"></div>
+
+<flux:header
+    container
+    sticky
+    class="z-40 border-b border-outline-variant/20 bg-surface-container-lowest/80 backdrop-blur-md"
+>
+    <flux:brand href="{{ route('dashboard') }}" logo="/img/river.png" name="Worker" />
+
+    <flux:navbar class="max-md:hidden">
+
+        @foreach ($navItems as $item)
+            <a href="{{ route($item['route']) }}" wire:navigate class="contents">
+                <flux:navbar.item
+                    :icon="$item['icon']"
+                    :current="request()->routeIs(...$item['active'])"
+                >
+                    {{ $item['label'] }}
+                </flux:navbar.item>
+            </a>
+        @endforeach
+
+    </flux:navbar>
+
+    <flux:spacer />
+
+    <div class="flex items-center gap-2">
+        <div class="hidden dark:block">
+            <flux:button
+                x-data
+                x-on:click="
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                "
+                variant="ghost"
+                icon="sun"
+                size="sm"
+                aria-label="Alternar para modo claro"
+            />
+        </div>
+        <div class="block dark:hidden">
+            <flux:button
+                x-data
+                x-on:click="
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                "
+                variant="ghost"
+                icon="moon"
+                size="sm"
+                aria-label="Alternar para modo escuro"
+            />
+        </div>
+
+        <livewire:busca-global />
+
+        {{ $headerActions ?? '' }}
+    </div>
+
+</flux:header>
+
+<main x-data x-mermaid x-highlight class="flex-1 min-h-0 overflow-y-auto">
+    <flux:main class="min-h-full">
+        {{ $slot }}
+    </flux:main>
+</main>
+
+<nav class="shrink-0 border-t border-outline-variant bg-surface-container-lowest/95 backdrop-blur-md md:hidden">
+    <div class="mx-auto flex max-w-md items-stretch justify-around">
+        @foreach ($navItems as $item)
+            <a wire:navigate href="{{ route($item['route']) }}"
+               @if (request()->routeIs(...$item['active'])) data-current @endif
+               class="flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] text-on-surface-variant data-current:text-primary data-current:font-semibold">
+                <flux:icon :name="$item['icon']" class="size-6" />
+                <span>{{ $item['mobileLabel'] ?? $item['label'] }}</span>
+            </a>
+        @endforeach
+    </div>
+</nav>
+
+@persist('toast')
+<flux:toast position="bottom center" />
+@endpersist
+
+@livewireScripts
+@fluxScripts
+
+<flux:modal name="global-token-expiration" class="min-w-88">
+    <div class="space-y-6">
+        <div>
+            <flux:heading size="lg">Sessão finalizada</flux:heading>
+            <flux:text class="mt-2">
+                Sua sessão expirou. É preciso recarregar a página e refazer o login.
+            </flux:text>
+        </div>
+        <div class="flex gap-2">
+            <flux:spacer />
+            <flux:modal.close>
+                <flux:button variant="ghost">Manter na página</flux:button>
+            </flux:modal.close>
+            <flux:button variant="primary" x-on:click="window.location.reload()">
+                Recarregar e entrar
+            </flux:button>
+        </div>
+    </div>
+</flux:modal>
+
+</body>
+</html>

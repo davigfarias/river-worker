@@ -1,0 +1,107 @@
+<div class="mx-auto w-full max-w-7xl py-8">
+    @php($project = $this->project)
+
+    <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+        <div>
+            <flux:heading size="xl" level="1">{{ $project->name }}</flux:heading>
+            @if ($project->description)
+                <flux:text class="mt-2 max-w-2xl">{{ $project->description }}</flux:text>
+            @endif
+            @if ($project->repository_url)
+                <flux:link href="{{ $project->repository_url }}" target="_blank" class="mt-1 inline-block text-sm">{{ $project->repository_url }}</flux:link>
+            @endif
+        </div>
+
+        <div class="flex gap-2">
+            <flux:modal.trigger name="edit-project"><flux:button variant="ghost" icon="pencil-square">Editar</flux:button></flux:modal.trigger>
+            <flux:modal.trigger name="delete-project"><flux:button variant="ghost" icon="trash" /></flux:modal.trigger>
+        </div>
+    </div>
+
+    <div class="mb-4 flex items-center justify-between">
+        <flux:heading size="lg">Documentação</flux:heading>
+        <flux:modal.trigger name="add-doc"><flux:button size="sm" icon="plus">Novo documento</flux:button></flux:modal.trigger>
+    </div>
+
+    <div class="space-y-6">
+        @forelse ($this->docsByCategory as $category => $docs)
+            <section wire:key="category-{{ $category }}">
+                <flux:heading size="sm" class="text-on-surface-variant mb-2 uppercase">{{ $category }}</flux:heading>
+                <div class="divide-surface-variant border-surface-variant divide-y rounded-xl border">
+                    @foreach ($docs as $doc)
+                        <a wire:key="doc-{{ $doc->id }}" href="{{ route('projetos.docs.show', ['project' => $project->id, 'doc' => $doc->id]) }}" wire:navigate class="hover:bg-surface-variant/40 flex items-center gap-3 px-4 py-3 transition-colors">
+                            <flux:icon name="document-text" class="size-5" />
+                            <span>{{ $doc->title }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            </section>
+        @empty
+            <x-empty-state icon="document-text" heading="Sem documentação" description="Crie o primeiro documento em Markdown deste projeto." />
+        @endforelse
+    </div>
+
+    <div class="mt-10 mb-4 flex items-center justify-between">
+        <flux:heading size="lg">Demandas</flux:heading>
+        <flux:modal.trigger name="add-work-item"><flux:button size="sm" icon="plus">Nova demanda</flux:button></flux:modal.trigger>
+    </div>
+    <div class="divide-surface-variant border-surface-variant divide-y rounded-xl border">
+        @forelse ($project->workItems as $item)
+            <a wire:key="item-{{ $item->id }}" href="{{ route('trabalho.show', $item->id) }}" wire:navigate class="hover:bg-surface-variant/40 flex items-center justify-between gap-3 px-4 py-3 transition-colors">
+                <span>{{ $item->title }}</span>
+                <flux:badge size="sm" :color="$item->status->badgeColor()">{{ $item->status->label() }}</flux:badge>
+            </a>
+        @empty
+            <flux:text class="p-4">Nenhuma demanda neste projeto.</flux:text>
+        @endforelse
+    </div>
+
+    <flux:modal name="add-doc" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-md">
+        <form wire:submit="createDoc" class="space-y-5">
+            <flux:heading size="lg">Novo documento</flux:heading>
+            <flux:input label="Título" wire:model="docTitle" />
+            <flux:input label="Categoria" wire:model="docCategory" placeholder="Ex: Módulo de Autenticação" list="doc-categories" />
+            <datalist id="doc-categories">
+                @foreach ($this->docsByCategory->keys() as $category)
+                    <option value="{{ $category }}"></option>
+                @endforeach
+            </datalist>
+            <div class="flex"><flux:spacer /><flux:button type="submit" variant="primary">Criar e editar</flux:button></div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="add-work-item" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-md">
+        <form wire:submit="createWorkItem" class="space-y-5">
+            <div>
+                <flux:heading size="lg">Nova demanda</flux:heading>
+                <flux:text class="mt-2">Vinculada a {{ $project->name }}.</flux:text>
+            </div>
+            <flux:input label="Título" wire:model="workItemTitle" />
+            <div class="flex"><flux:spacer /><flux:button type="submit" variant="primary">Criar demanda</flux:button></div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="edit-project" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-lg">
+        <form wire:submit="updateProject" class="space-y-5">
+            <flux:heading size="lg">Editar projeto</flux:heading>
+            <flux:input label="Nome" wire:model="name" />
+            <flux:input label="Repositório (URL)" wire:model="repository_url" />
+            <flux:textarea label="Visão geral" wire:model="description" rows="3" />
+            <div class="flex"><flux:spacer /><flux:button type="submit" variant="primary">Salvar</flux:button></div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="delete-project" class="min-w-88">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Excluir projeto?</flux:heading>
+                <flux:text class="mt-2">Os documentos serão excluídos. As demandas ficam sem projeto.</flux:text>
+            </div>
+            <div class="flex gap-2">
+                <flux:spacer />
+                <flux:modal.close><flux:button variant="ghost">Cancelar</flux:button></flux:modal.close>
+                <flux:button variant="danger" wire:click="deleteProject">Excluir</flux:button>
+            </div>
+        </div>
+    </flux:modal>
+</div>
