@@ -105,6 +105,7 @@
                             <flux:text class="truncate font-medium">{{ $item->title }}</flux:text>
                             <flux:text size="xs" class="text-on-surface-variant">{{ $item->status->label() }}</flux:text>
                         </div>
+                        <flux:badge size="sm" :color="$item->kind->badgeColor()" class="font-mono">{{ $item->kind->value }}</flux:badge>
                     </a>
                 @empty
                     <flux:text size="sm" class="text-on-surface-variant">Fila vazia.</flux:text>

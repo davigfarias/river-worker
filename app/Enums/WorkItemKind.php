@@ -40,6 +40,24 @@ enum WorkItemKind: string
         };
     }
 
+    public function badgeColor(): string
+    {
+        return match ($this) {
+            self::Feat => 'green',
+            self::Fix => 'red',
+            self::Refactor => 'blue',
+            self::Clean => 'teal',
+            self::Perf => 'amber',
+            self::Style => 'pink',
+            self::Docs => 'sky',
+            self::Test => 'purple',
+            self::Build => 'orange',
+            self::Ci => 'indigo',
+            self::Chore => 'zinc',
+            self::Revert => 'rose',
+        };
+    }
+
     /**
      * Classe literal (para o scan do Tailwind) da cor do marcador.
      */

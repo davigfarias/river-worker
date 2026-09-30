@@ -69,7 +69,10 @@
         @forelse (($isDeliveredTab ? $this->deliveredWorkItems : $this->activeWorkItems) as $item)
             <div wire:key="item-{{ $item->id }}" class="hover:bg-surface-variant/40 flex items-center gap-2 pr-2 transition-colors">
                 <a href="{{ route('trabalho.show', $item->id) }}" wire:navigate class="flex min-w-0 flex-1 items-center justify-between gap-3 py-3 pl-4">
-                    <span>{{ $item->title }}</span>
+                    <span class="flex min-w-0 items-center gap-2">
+                        <flux:badge size="sm" :color="$item->kind->badgeColor()" class="font-mono">{{ $item->kind->value }}</flux:badge>
+                        <span class="truncate">{{ $item->title }}</span>
+                    </span>
                     <flux:badge size="sm" :color="$item->status->badgeColor()">{{ $item->status->label() }}</flux:badge>
                 </a>
                 <flux:button size="xs" variant="ghost" icon="trash" wire:click="confirmDeleteWorkItem({{ $item->id }})" aria-label="Excluir demanda" />
