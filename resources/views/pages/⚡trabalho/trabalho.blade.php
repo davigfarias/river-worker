@@ -39,6 +39,26 @@
         </flux:modal.trigger>
     </div>
 
+    {{-- Prioridade (opcional, manual) --}}
+    @php($priority = $this->priority)
+    <div class="border-outline-variant/40 bg-surface-container-lowest mb-5 flex flex-wrap items-center gap-3 rounded-2xl border px-5 py-3 shadow-sm" wire:key="priority-strip">
+        <flux:icon name="flag" class="text-on-surface-variant size-5 shrink-0" />
+        <flux:heading>Prioridade</flux:heading>
+
+        @if ($priority)
+            <flux:badge :color="$priority->priority->badgeColor()">{{ $priority->priority->label() }}</flux:badge>
+            <flux:text class="min-w-0 flex-1">
+                {{ $priority->explanation }}
+                <span class="text-on-surface-variant">· {{ $priority->escalated ? 'escalada por regra' : 'score '.number_format($priority->score, 1, ',') }}</span>
+            </flux:text>
+            <flux:button size="sm" variant="ghost" icon="trash" wire:click="clearAssessment" aria-label="Limpar avaliação" />
+            <flux:button size="sm" variant="ghost" icon="arrow-path" wire:click="startAssessment">Reavaliar</flux:button>
+        @else
+            <flux:text class="text-on-surface-variant flex-1">Opcional. Responda algumas perguntas para medir a prioridade.</flux:text>
+            <flux:button size="sm" variant="primary" icon="flag" wire:click="startAssessment">Avaliar prioridade</flux:button>
+        @endif
+    </div>
+
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
 
         {{-- Especificação --}}
@@ -172,6 +192,38 @@
             </div>
         </x-island>
     </div>
+
+    <flux:modal name="assessment" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-md">
+        @php($steps = $this->assessmentSteps)
+        @php($current = $steps[$assessmentStep] ?? null)
+        @if ($current)
+            <div class="space-y-5" wire:key="assessment-step-{{ $assessmentStep }}">
+                <div class="space-y-2">
+                    <flux:text size="sm" class="text-on-surface-variant">Pergunta {{ $assessmentStep + 1 }} de {{ count($steps) }}</flux:text>
+                    <div class="bg-surface-variant h-2 overflow-hidden rounded-full" role="progressbar" aria-valuemin="0" aria-valuemax="{{ count($steps) }}" aria-valuenow="{{ $assessmentStep + 1 }}">
+                        <div class="bg-primary h-full rounded-full transition-all" style="width: {{ ($assessmentStep + 1) / count($steps) * 100 }}%"></div>
+                    </div>
+                </div>
+
+                <flux:heading size="lg">{{ $current['question'] }}</flux:heading>
+
+                <div class="space-y-2">
+                    @foreach ($current['options'] as $value => $label)
+                        @php($selected = isset($assessment[$current['key']]) && (string) (int) $assessment[$current['key']] === (string) $value)
+                        <button
+                            type="button"
+                            wire:click="answer('{{ $value }}')"
+                            class="{{ $selected ? 'border-primary bg-primary/10' : 'border-surface-variant hover:bg-surface-container-low' }} focus-visible:outline-primary w-full rounded-lg border px-4 py-2.5 text-start transition-colors focus-visible:outline-2"
+                        >{{ $label }}</button>
+                    @endforeach
+                </div>
+
+                <div class="flex">
+                    <flux:button variant="ghost" icon="arrow-left" wire:click="previousAssessmentStep" :disabled="$assessmentStep === 0">Voltar</flux:button>
+                </div>
+            </div>
+        @endif
+    </flux:modal>
 
     <flux:modal name="confirm-deploy" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-md">
         <form wire:submit="registerDeploy" class="space-y-5">

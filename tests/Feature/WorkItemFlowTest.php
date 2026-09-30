@@ -1,8 +1,10 @@
 <?php
 
 use App\Actions\CreateWorkItem;
+use App\Actions\ScoreWorkItem;
 use App\Enums\ReadingStatus;
 use App\Enums\WorkItemKind;
+use App\Enums\WorkItemPriority;
 use App\Enums\WorkItemStatus;
 use App\Models\AccessToken;
 use App\Models\Project;
@@ -270,4 +272,57 @@ test('the kind is shown before the title and can be edited', function () {
         ->assertSee('fix');
 
     expect($item->fresh()->kind)->toBe(WorkItemKind::Fix);
+});
+
+test('priority is scored by WSJF bands and explains why', function () {
+    $scorer = app(ScoreWorkItem::class);
+    $answers = ['impact' => 4, 'urgency' => 3, 'risk' => 3, 'effort' => 2];
+
+    $result = $scorer->handle(WorkItemKind::Refactor, $answers);
+
+    expect($result->priority)->toBe(WorkItemPriority::High)
+        ->and($result->score)->toBe(5.0)
+        ->and($result->explanation)->toContain('impacto todos', 'prazo esta semana', 'esforço horas');
+
+    expect($scorer->handle(WorkItemKind::Refactor, ['impact' => 4, 'urgency' => 4, 'risk' => 4, 'effort' => 4])->priority)
+        ->toBe(WorkItemPriority::Medium)
+        ->and($scorer->handle(WorkItemKind::Refactor, ['impact' => 4]))->toBeNull();
+});
+
+test('escalation rules override the score', function () {
+    $scorer = app(ScoreWorkItem::class);
+    $low = ['impact' => 1, 'urgency' => 1, 'risk' => 1, 'effort' => 4];
+
+    $fix = $scorer->handle(WorkItemKind::Fix, $low + ['in_production' => true, 'has_workaround' => false]);
+    $withWorkaround = $scorer->handle(WorkItemKind::Fix, $low + ['in_production' => true, 'has_workaround' => true]);
+    $feat = $scorer->handle(WorkItemKind::Feat, $low + ['blocks_customer' => true]);
+
+    expect($fix->priority)->toBe(WorkItemPriority::Critical)
+        ->and($fix->escalated)->toBeTrue()
+        ->and($fix->explanation)->toContain('bug em produção sem contorno')
+        ->and($withWorkaround->priority)->toBe(WorkItemPriority::Low)
+        ->and($feat->priority)->toBe(WorkItemPriority::High);
+});
+
+test('the assessment wizard is optional, steps by kind, saves on the last answer and can be cleared', function () {
+    $item = WorkItem::factory()->create(['kind' => WorkItemKind::Fix]);
+
+    $page = Livewire::test('pages::trabalho', ['id' => $item->id])
+        ->assertSee('Avaliar prioridade')
+        ->call('startAssessment');
+
+    // 4 fatores + 2 perguntas de fix
+    expect($page->instance()->assessmentSteps)->toHaveCount(6);
+
+    $page->call('answer', '9')->assertSet('assessmentStep', 0);
+
+    foreach (['4', '4', '4', '1', '1', '0'] as $value) {
+        $page->call('answer', $value);
+    }
+
+    expect($item->fresh()->assessment)->toMatchArray(['impact' => 4, 'effort' => 1, 'in_production' => true, 'has_workaround' => false]);
+    $page->assertSee('Crítica');
+
+    $page->call('clearAssessment')->assertSee('Avaliar prioridade');
+    expect($item->fresh()->assessment)->toBeNull();
 });

@@ -5,9 +5,12 @@ use App\Actions\ChangeWorkItemStatus;
 use App\Actions\DeleteWorkFile;
 use App\Actions\DeleteWorkItem;
 use App\Actions\RegisterDeploy;
+use App\Actions\ScoreWorkItem;
 use App\Actions\ToggleWorkFileReviewed;
 use App\Actions\ToggleWorkStep;
 use App\Actions\UpdateWorkItem;
+use App\DTO\PriorityResultData;
+use App\Enums\PriorityFactor;
 use App\Enums\WorkItemKind;
 use App\Enums\WorkItemStatus;
 use App\Models\Project;
@@ -35,6 +38,11 @@ new class extends Component
 
     public bool $editingSpec = false;
 
+    /** @var array<string, mixed> */
+    public array $assessment = [];
+
+    public int $assessmentStep = 0;
+
     public string $filePath = '';
 
     public ?string $reasonNotes = null;
@@ -54,6 +62,7 @@ new class extends Component
             'description' => (string) $item->description,
             'deployVersion' => $item->deploy_version,
             'releaseNotes' => $item->release_notes,
+            'assessment' => $item->assessment ?? [],
         ]);
     }
 
@@ -61,6 +70,12 @@ new class extends Component
     public function item(): WorkItem
     {
         return WorkItem::with(['project', 'steps', 'files'])->findOrFail($this->workItemId);
+    }
+
+    #[Computed]
+    public function priority(): ?PriorityResultData
+    {
+        return app(ScoreWorkItem::class)->handle($this->item->kind, $this->item->assessment);
     }
 
     /**
@@ -111,6 +126,67 @@ new class extends Component
 
         if ($this->report($action->handle($this->workItemId, $validated))) {
             $this->editingSpec = false;
+        }
+    }
+
+    /**
+     * Passos do questionário: os quatro fatores e as perguntas de sim/não da natureza.
+     *
+     * @return list<array{key: string, question: string, options: array<int|string, string>}>
+     */
+    #[Computed]
+    public function assessmentSteps(): array
+    {
+        $factors = collect(PriorityFactor::cases())->map(fn (PriorityFactor $f) => [
+            'key' => $f->value, 'question' => $f->question(), 'options' => $f->options(),
+        ]);
+
+        $questions = collect($this->item->kind->priorityQuestions())->map(fn (string $q, string $key) => [
+            'key' => $key, 'question' => $q, 'options' => ['1' => 'Sim', '0' => 'Não'],
+        ])->values();
+
+        return $factors->concat($questions)->all();
+    }
+
+    public function startAssessment(): void
+    {
+        $this->assessment = $this->item->assessment ?? [];
+        $this->assessmentStep = 0;
+        $this->modal('assessment')->show();
+    }
+
+    public function answer(string $value, UpdateWorkItem $action): void
+    {
+        $step = $this->assessmentSteps[$this->assessmentStep] ?? null;
+
+        if (! $step || ! array_key_exists($value, $step['options'])) {
+            return;
+        }
+
+        $this->assessment[$step['key']] = PriorityFactor::tryFrom($step['key']) ? (int) $value : $value === '1';
+
+        if ($this->assessmentStep < count($this->assessmentSteps) - 1) {
+            $this->assessmentStep++;
+
+            return;
+        }
+
+        if ($this->report($action->handle($this->workItemId, ['assessment' => $this->assessment]))) {
+            unset($this->priority);
+            $this->modal('assessment')->close();
+        }
+    }
+
+    public function previousAssessmentStep(): void
+    {
+        $this->assessmentStep = max(0, $this->assessmentStep - 1);
+    }
+
+    public function clearAssessment(UpdateWorkItem $action): void
+    {
+        if ($this->report($action->handle($this->workItemId, ['assessment' => null]))) {
+            unset($this->priority);
+            $this->reset('assessment');
         }
     }
 

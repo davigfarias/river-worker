@@ -26,6 +26,7 @@ use Laravel\Scout\Searchable;
     'deployed_at',
     'deploy_version',
     'release_notes',
+    'assessment',
 ])]
 #[Table(name: 'work_items')]
 class WorkItem extends Model
@@ -42,6 +43,7 @@ class WorkItem extends Model
             'kind' => WorkItemKind::class,
             'status' => WorkItemStatus::class,
             'deployed_at' => 'datetime',
+            'assessment' => 'array',
         ];
     }
 

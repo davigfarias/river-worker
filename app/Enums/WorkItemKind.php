@@ -78,4 +78,25 @@ enum WorkItemKind: string
             self::Revert => 'bg-rose-400',
         };
     }
+
+    /**
+     * Perguntas de sim/não que só fazem sentido para esta natureza na avaliação de prioridade.
+     *
+     * @return array<string, string>
+     */
+    public function priorityQuestions(): array
+    {
+        return match ($this) {
+            self::Fix => [
+                'in_production' => 'Está em produção?',
+                'has_workaround' => 'Existe contorno (workaround)?',
+            ],
+            self::Feat => ['blocks_customer' => 'Algum cliente está bloqueado sem isso?'],
+            self::Clean, self::Chore => [
+                'has_dependents' => 'Algo depende disso?',
+                'hinders_others' => 'Atrapalha outras demandas?',
+            ],
+            default => [],
+        };
+    }
 }
