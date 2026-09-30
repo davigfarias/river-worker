@@ -255,3 +255,6 @@
 
 /* Editor da especificação da demanda: fonte maior. */
 .spec-editor .CodeMirror { font-size: 1.0625rem; line-height: 1.6; }
+
+/* Tabelas largas rolam dentro do artigo em vez de invadir a coluna do TOC. */
+.prose :where(table) { display: block; overflow-x: auto; }
