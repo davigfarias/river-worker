@@ -38,6 +38,10 @@ new class extends Component
 
     public bool $editingSpec = false;
 
+    public ?string $editingBlock = null;
+
+    public string $blockAnswer = '';
+
     /** @var array<string, mixed> */
     public array $assessment = [];
 
@@ -89,7 +93,7 @@ new class extends Component
 
     private function report(Outcome $outcome): bool
     {
-        unset($this->item);
+        unset($this->item, $this->availableSpecQuestions);
 
         if ($outcome->message) {
             Flux::toast(duration: 2500, text: $outcome->message, variant: $outcome->success ? 'success' : 'danger');
@@ -126,6 +130,67 @@ new class extends Component
 
         if ($this->report($action->handle($this->workItemId, $validated))) {
             $this->editingSpec = false;
+        }
+    }
+
+    /**
+     * Perguntas da natureza que ainda não viraram bloco.
+     *
+     * @return array<string, string>
+     */
+    #[Computed]
+    public function availableSpecQuestions(): array
+    {
+        $used = collect($this->item->specs)->pluck('key')->all();
+
+        return collect($this->item->kind->specQuestions())->except($used)->all();
+    }
+
+    public function addSpecBlock(string $key, UpdateWorkItem $action): void
+    {
+        $question = $this->availableSpecQuestions[$key] ?? null;
+
+        if ($question === null) {
+            return;
+        }
+
+        $specs = [...($this->item->specs ?? []), ['key' => $key, 'question' => $question, 'answer' => '']];
+
+        if ($this->report($action->handle($this->workItemId, ['specs' => $specs]))) {
+            unset($this->availableSpecQuestions);
+            $this->editSpecBlock($key);
+            $this->modal('spec-questions')->close();
+        }
+    }
+
+    public function editSpecBlock(string $key): void
+    {
+        $block = collect($this->item->specs)->firstWhere('key', $key);
+
+        $this->editingBlock = $block ? $key : null;
+        $this->blockAnswer = $block['answer'] ?? '';
+    }
+
+    public function saveSpecBlock(UpdateWorkItem $action): void
+    {
+        $this->validate(['blockAnswer' => 'nullable|string']);
+
+        $specs = collect($this->item->specs)
+            ->map(fn (array $b) => $b['key'] === $this->editingBlock ? [...$b, 'answer' => $this->blockAnswer] : $b)
+            ->all();
+
+        if ($this->report($action->handle($this->workItemId, ['specs' => $specs]))) {
+            $this->reset('editingBlock', 'blockAnswer');
+        }
+    }
+
+    public function removeSpecBlock(string $key, UpdateWorkItem $action): void
+    {
+        $specs = collect($this->item->specs)->reject(fn (array $b) => $b['key'] === $key)->values()->all();
+
+        if ($this->report($action->handle($this->workItemId, ['specs' => $specs]))) {
+            unset($this->availableSpecQuestions);
+            $this->reset('editingBlock', 'blockAnswer');
         }
     }
 

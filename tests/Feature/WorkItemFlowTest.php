@@ -326,3 +326,26 @@ test('the assessment wizard is optional, steps by kind, saves on the last answer
     $page->call('clearAssessment')->assertSee('Avaliar prioridade');
     expect($item->fresh()->assessment)->toBeNull();
 });
+
+test('a suggested question becomes a spec block that can be answered and removed', function () {
+    $item = WorkItem::factory()->create(['kind' => WorkItemKind::Fix]);
+
+    $page = Livewire::test('pages::trabalho', ['id' => $item->id])
+        ->call('addSpecBlock', 'reproduce')
+        ->assertSet('editingBlock', 'reproduce')
+        ->call('addSpecBlock', 'reproduce')
+        ->call('addSpecBlock', 'nao-existe');
+
+    expect($item->fresh()->specs)->toHaveCount(1);
+
+    $page->set('blockAnswer', 'Abrir a demanda e recarregar.')
+        ->call('saveSpecBlock')
+        ->assertSet('editingBlock', null)
+        ->assertSee('Abrir a demanda e recarregar.');
+
+    expect($item->fresh()->specs[0]['answer'])->toBe('Abrir a demanda e recarregar.');
+
+    $page->call('removeSpecBlock', 'reproduce');
+
+    expect($item->fresh()->specs)->toBe([]);
+});

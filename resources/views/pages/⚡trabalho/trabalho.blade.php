@@ -61,33 +61,88 @@
 
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
 
-        {{-- Especificação --}}
+        {{-- Especificação: descrição livre + blocos vindos das perguntas sugeridas --}}
         <x-island title="Especificação" icon="document-text" wire:key="island-spec">
-            <x-slot:actions>
-                @if ($editingSpec)
-                    <flux:button size="sm" variant="ghost" wire:click="$set('editingSpec', false)">Cancelar</flux:button>
-                    <flux:button size="sm" variant="primary" wire:click="saveSpec">Salvar</flux:button>
-                @else
-                    <flux:button size="sm" variant="ghost" icon="pencil-square" wire:click="$set('editingSpec', true)">Editar</flux:button>
-                @endif
-            </x-slot:actions>
-
-            @if ($editingSpec)
-                <div
-                    class="spec-editor"
-                    wire:key="spec-edit"
-                    x-on:keydown.escape="$wire.set('editingSpec', false)"
-                    x-on:keydown.meta.enter.prevent="$wire.saveSpec()"
-                    x-on:keydown.ctrl.enter.prevent="$wire.saveSpec()"
-                >
-                    <div wire:ignore>
-                        <div x-data="markdownEditor('description', '220px')"><textarea x-ref="textarea"></textarea></div>
+            <div class="divide-outline-variant/30 border-outline-variant/30 divide-y rounded-xl border">
+                {{-- Descrição --}}
+                <div x-data="{ open: {{ $editingSpec || filled($item->description) ? 'true' : 'false' }} }" wire:key="spec-description">
+                    <div class="flex items-center gap-2 px-4 py-2.5">
+                        <button type="button" x-on:click="open = ! open" x-bind:aria-expanded="open" class="focus-visible:outline-primary flex min-w-0 flex-1 items-center gap-2 text-start focus-visible:outline-2">
+                            <flux:icon name="chevron-right" variant="micro" class="text-on-surface-variant shrink-0 transition-transform" x-bind:class="open && 'rotate-90'" />
+                            <flux:heading class="truncate">Descrição</flux:heading>
+                        </button>
+                        @if ($editingSpec)
+                            <flux:button size="xs" variant="ghost" wire:click="$set('editingSpec', false)">Cancelar</flux:button>
+                            <flux:button size="xs" variant="primary" wire:click="saveSpec">Salvar</flux:button>
+                        @else
+                            <flux:button size="xs" variant="ghost" icon="pencil-square" x-on:click="open = true" wire:click="$set('editingSpec', true)" aria-label="Editar descrição" />
+                        @endif
+                    </div>
+                    <div x-show="open" x-collapse>
+                        <div class="px-4 pb-4">
+                            @if ($editingSpec)
+                                <div
+                                    class="spec-editor"
+                                    wire:key="spec-edit"
+                                    x-on:keydown.escape="$wire.set('editingSpec', false)"
+                                    x-on:keydown.meta.enter.prevent="$wire.saveSpec()"
+                                    x-on:keydown.ctrl.enter.prevent="$wire.saveSpec()"
+                                >
+                                    <div wire:ignore>
+                                        <div x-data="markdownEditor('description', '220px')"><textarea x-ref="textarea"></textarea></div>
+                                    </div>
+                                </div>
+                            @elseif (filled($item->description))
+                                <article class="prose dark:prose-invert max-w-none cursor-text" title="Duplo clique para editar" wire:dblclick="$set('editingSpec', true)">{!! Str::markdownRich($item->description, ['html_input' => 'strip']) !!}</article>
+                            @else
+                                <flux:text size="sm" class="text-on-surface-variant">Sem descrição. Escreva o escopo e os prompts base desta demanda.</flux:text>
+                            @endif
+                        </div>
                     </div>
                 </div>
-            @elseif (filled($item->description))
-                <article class="prose prose-lg dark:prose-invert max-w-none cursor-text" title="Duplo clique para editar" wire:dblclick="$set('editingSpec', true)">{!! Str::markdownRich($item->description, ['html_input' => 'strip']) !!}</article>
-            @else
-                <x-empty-state icon="document-text" heading="Sem especificação" description="Descreva o escopo e os prompts base desta demanda." />
+
+                {{-- Blocos de pergunta --}}
+                @foreach ($item->specs ?? [] as $block)
+                    @php($isEditing = $editingBlock === $block['key'])
+                    <div x-data="{ open: {{ $isEditing || blank($block['answer']) ? 'true' : 'false' }} }" wire:key="spec-block-{{ $block['key'] }}">
+                        <div class="flex items-center gap-2 px-4 py-2.5">
+                            <button type="button" x-on:click="open = ! open" x-bind:aria-expanded="open" class="focus-visible:outline-primary flex min-w-0 flex-1 items-center gap-2 text-start focus-visible:outline-2">
+                                <flux:icon name="chevron-right" variant="micro" class="text-on-surface-variant shrink-0 transition-transform" x-bind:class="open && 'rotate-90'" />
+                                <flux:heading class="{{ blank($block['answer']) ? 'text-on-surface-variant' : '' }}">{{ $block['question'] }}</flux:heading>
+                            </button>
+                            @unless ($isEditing)
+                                <flux:button size="xs" variant="ghost" icon="pencil-square" x-on:click="open = true" wire:click="editSpecBlock('{{ $block['key'] }}')" aria-label="Responder" />
+                                <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="removeSpecBlock('{{ $block['key'] }}')" aria-label="Remover pergunta" />
+                            @endunless
+                        </div>
+                        <div x-show="open" x-collapse>
+                            <div class="px-4 pb-4">
+                                @if ($isEditing)
+                                    <form wire:submit="saveSpecBlock" x-on:keydown.escape="$wire.set('editingBlock', null)" class="space-y-2">
+                                        <flux:textarea wire:model="blockAnswer" rows="4" autofocus resize="vertical" aria-label="{{ $block['question'] }}" placeholder="Escreva a resposta (markdown)" x-on:keydown.meta.enter.prevent="$wire.saveSpecBlock()" x-on:keydown.ctrl.enter.prevent="$wire.saveSpecBlock()" />
+                                        <div class="flex justify-end gap-2">
+                                            <flux:button size="xs" variant="ghost" wire:click="$set('editingBlock', null)">Cancelar</flux:button>
+                                            <flux:button size="xs" variant="primary" type="submit">Salvar</flux:button>
+                                        </div>
+                                    </form>
+                                @elseif (filled($block['answer']))
+                                    <article class="prose dark:prose-invert max-w-none cursor-text" title="Duplo clique para editar" wire:dblclick="editSpecBlock('{{ $block['key'] }}')">{!! Str::markdownRich($block['answer'], ['html_input' => 'strip']) !!}</article>
+                                @else
+                                    <button type="button" wire:click="editSpecBlock('{{ $block['key'] }}')" class="text-on-surface-variant hover:text-on-surface focus-visible:outline-primary text-sm focus-visible:outline-2">Sem resposta ainda. Clique para responder.</button>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            @if ($this->availableSpecQuestions)
+                <flux:modal.trigger name="spec-questions">
+                    <button type="button" class="border-outline-variant/60 text-on-surface-variant hover:border-primary hover:text-primary focus-visible:outline-primary mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed py-3 text-sm transition-colors focus-visible:outline-2">
+                        <flux:icon name="plus" variant="micro" />
+                        Adicionar pergunta
+                    </button>
+                </flux:modal.trigger>
             @endif
         </x-island>
 
@@ -192,6 +247,31 @@
             </div>
         </x-island>
     </div>
+
+    <flux:modal name="spec-questions" variant="flyout" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-md">
+        <div class="space-y-5">
+            <div>
+                <flux:heading size="lg">Perguntas para <span class="font-mono">{{ $item->kind->value }}</span></flux:heading>
+                <flux:text class="mt-2">Escolha uma para adicionar à especificação como um bloco a preencher.</flux:text>
+            </div>
+
+            <div class="space-y-2">
+                @forelse ($this->availableSpecQuestions as $key => $question)
+                    <button
+                        type="button"
+                        wire:key="spec-question-{{ $key }}"
+                        wire:click="addSpecBlock('{{ $key }}')"
+                        class="border-surface-variant hover:bg-surface-container-low focus-visible:outline-primary flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-start transition-colors focus-visible:outline-2"
+                    >
+                        <flux:icon name="plus" variant="micro" class="text-on-surface-variant shrink-0" />
+                        <span class="flex-1">{{ $question }}</span>
+                    </button>
+                @empty
+                    <flux:text class="text-on-surface-variant">Todas as perguntas desta natureza já estão na especificação.</flux:text>
+                @endforelse
+            </div>
+        </div>
+    </flux:modal>
 
     <flux:modal name="assessment" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-md">
         @php($steps = $this->assessmentSteps)

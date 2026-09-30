@@ -99,4 +99,64 @@ enum WorkItemKind: string
             default => [],
         };
     }
+
+    /**
+     * Perguntas sugeridas para a especificação: cada uma vira um bloco a preencher.
+     *
+     * @return array<string, string>
+     */
+    public function specQuestions(): array
+    {
+        return match ($this) {
+            self::Fix => [
+                'reproduce' => 'Como reproduzir?',
+                'reported' => 'O que o usuário relatou?',
+                'hypotheses' => 'Quais são as hipóteses?',
+                'tried' => 'O que já foi tentado (inclusive pela IA) e não funcionou?',
+                'changed' => 'O que mudou desde que funcionava?',
+            ],
+            self::Feat => [
+                'problem' => 'Que problema isso resolve e para quem?',
+                'acceptance' => 'Qual o critério de aceite?',
+                'out_of_scope' => 'O que fica fora do escopo?',
+                'affects' => 'Afeta dados ou telas existentes?',
+            ],
+            self::Chore => [
+                'why_now' => 'Por que agora?',
+                'risk' => 'Qual o risco de quebrar algo?',
+                'validate' => 'Como validar que nada mudou?',
+            ],
+            self::Clean => [
+                'pain' => 'Qual a dor do código atual?',
+                'identical' => 'O comportamento deve ficar idêntico?',
+                'tests' => 'Que testes provam isso?',
+            ],
+            self::Refactor => [
+                'pain' => 'Qual a dor da estrutura atual?',
+                'tests' => 'Que testes garantem o mesmo comportamento?',
+            ],
+            self::Perf => [
+                'metric' => 'Qual a métrica atual e qual a meta?',
+                'measure' => 'Como medir antes e depois?',
+            ],
+            self::Test => [
+                'coverage' => 'Que comportamento fica sem cobertura hoje?',
+                'cases' => 'Quais casos precisam ser cobertos?',
+            ],
+            self::Docs => [
+                'audience' => 'Quem vai ler e o que precisa entender?',
+                'outdated' => 'O que está desatualizado ou faltando?',
+            ],
+            self::Ci => [
+                'pipeline' => 'Que etapa do pipeline muda e por quê?',
+                'rollback' => 'Como desfazer se quebrar o deploy?',
+            ],
+            self::Revert => [
+                'commit' => 'Qual commit reverter?',
+                'why' => 'Por que reverter?',
+            ],
+            self::Style => ['where' => 'Quais telas ou componentes mudam?'],
+            self::Build => ['why' => 'O que muda nas dependências ou no build, e por quê?'],
+        };
+    }
 }
