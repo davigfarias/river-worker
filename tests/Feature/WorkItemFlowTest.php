@@ -257,3 +257,17 @@ test('an invalid work item kind is rejected', function () {
         ->call('createWorkItem')
         ->assertHasErrors(['kind']);
 });
+
+test('the kind is shown before the title and can be edited', function () {
+    $item = WorkItem::factory()->create(['kind' => WorkItemKind::Feat]);
+
+    Livewire::test('pages::trabalho', ['id' => $item->id])
+        ->assertSee('feat')
+        ->set('editingTitle', true)
+        ->set('kind', 'fix')
+        ->call('saveTitle')
+        ->assertSet('editingTitle', false)
+        ->assertSee('fix');
+
+    expect($item->fresh()->kind)->toBe(WorkItemKind::Fix);
+});

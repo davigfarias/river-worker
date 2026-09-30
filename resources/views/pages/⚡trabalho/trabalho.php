@@ -8,12 +8,14 @@ use App\Actions\RegisterDeploy;
 use App\Actions\ToggleWorkFileReviewed;
 use App\Actions\ToggleWorkStep;
 use App\Actions\UpdateWorkItem;
+use App\Enums\WorkItemKind;
 use App\Enums\WorkItemStatus;
 use App\Models\Project;
 use App\Models\WorkItem;
 use App\Support\Outcome;
 use Flux\Flux;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -24,6 +26,8 @@ new class extends Component
     public int $workItemId;
 
     public string $title = '';
+
+    public string $kind = 'feat';
 
     public bool $editingTitle = false;
 
@@ -46,6 +50,7 @@ new class extends Component
         $this->workItemId = $item->id;
         $this->fill([
             'title' => $item->title,
+            'kind' => $item->kind->value,
             'description' => (string) $item->description,
             'deployVersion' => $item->deploy_version,
             'releaseNotes' => $item->release_notes,
@@ -82,6 +87,7 @@ new class extends Component
     {
         $validated = $this->validate([
             'title' => 'required|string|max:255',
+            'kind' => ['required', Rule::enum(WorkItemKind::class)],
         ]);
 
         if ($this->report($action->handle($this->workItemId, $validated))) {
@@ -93,7 +99,8 @@ new class extends Component
     {
         $this->reset('editingTitle');
         $this->title = $this->item->title;
-        $this->resetValidation('title');
+        $this->kind = $this->item->kind->value;
+        $this->resetValidation(['title', 'kind']);
     }
 
     public function saveSpec(UpdateWorkItem $action): void

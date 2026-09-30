@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 final readonly class UpdateWorkItem
 {
     /**
-     * @param  array{title?: string, project_id?: int|null, description?: string|null}  $attributes
+     * @param  array{title?: string, kind?: string, project_id?: int|null, description?: string|null}  $attributes
      */
     public function handle(int $id, array $attributes): Outcome
     {
