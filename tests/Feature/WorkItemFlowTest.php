@@ -213,6 +213,14 @@ test('project work items are split into active and delivered tabs', function () 
         ->assertDontSee('Em andamento');
 });
 
+test('the work item page links back to its project through the breadcrumbs', function () {
+    $project = Project::factory()->create();
+    $item = WorkItem::factory()->create(['project_id' => $project->id]);
+
+    Livewire::test('pages::trabalho', ['id' => $item->id])
+        ->assertSeeHtml('href="'.route('projetos.show', $project->slug).'"');
+});
+
 test('the dashboard summarises the pipeline, reading and recent docs', function () {
     $project = Project::factory()->create();
     WorkItem::factory()->count(2)->create(['project_id' => $project->id, 'status' => WorkItemStatus::Backlog]);
