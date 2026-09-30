@@ -167,10 +167,11 @@
         @endforeach
     </nav>
 
-    <flux:modal name="add-work-item" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-lg">
+    <flux:modal name="add-work-item" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-xl">
         <form wire:submit="createWorkItem" class="space-y-5">
             <flux:heading size="lg">Nova demanda</flux:heading>
             <flux:input label="Título" wire:model="title" />
+            <x-work-item-kind-picker model="kind" :value="$kind" />
             <flux:select label="Projeto" wire:model="project_id" placeholder="Sem projeto">
                 @foreach ($this->projects as $project)
                     <flux:select.option value="{{ $project->id }}">{{ $project->name }}</flux:select.option>

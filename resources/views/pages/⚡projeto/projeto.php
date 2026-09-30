@@ -5,11 +5,13 @@ use App\Actions\DeleteProject;
 use App\Actions\DeleteWorkItem;
 use App\Actions\SaveProject;
 use App\Actions\SaveProjectDoc;
+use App\Enums\WorkItemKind;
 use App\Enums\WorkItemStatus;
 use App\Models\Project;
 use App\Models\ProjectDoc;
 use Flux\Flux;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
@@ -23,6 +25,8 @@ new class extends Component
     public string $docFilter = '';
 
     public string $workItemTitle = '';
+
+    public string $workItemKind = 'feat';
 
     #[Url(as: 'demandas')]
     public string $workItemTab = 'ativas';
@@ -75,9 +79,12 @@ new class extends Component
 
     public function createWorkItem(CreateWorkItem $action): void
     {
-        $validated = $this->validate(['workItemTitle' => 'required|string|max:255']);
+        $validated = $this->validate([
+            'workItemTitle' => 'required|string|max:255',
+            'workItemKind' => ['required', Rule::enum(WorkItemKind::class)],
+        ]);
 
-        $outcome = $action->handle(['title' => $validated['workItemTitle'], 'project_id' => $this->projectId]);
+        $outcome = $action->handle(['title' => $validated['workItemTitle'], 'kind' => $validated['workItemKind'], 'project_id' => $this->projectId]);
 
         if (! $outcome->success) {
             Flux::toast(duration: 2500, heading: 'Ocorreu um erro', text: $outcome->message, variant: 'danger');

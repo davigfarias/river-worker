@@ -2,6 +2,7 @@
 
 use App\Actions\CreateWorkItem;
 use App\Actions\GetDashboard;
+use App\Enums\WorkItemKind;
 use App\Models\CodeStudy;
 use App\Models\Concept;
 use App\Models\Principle;
@@ -9,6 +10,7 @@ use App\Models\Project;
 use App\Models\ReferenceMaterial;
 use Flux\Flux;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -16,6 +18,8 @@ use Livewire\Component;
 new #[Title('Foco')] class extends Component
 {
     public string $title = '';
+
+    public string $kind = 'feat';
 
     public ?int $project_id = null;
 
@@ -66,6 +70,7 @@ new #[Title('Foco')] class extends Component
     {
         $validated = $this->validate([
             'title' => 'required|string|max:255',
+            'kind' => ['required', Rule::enum(WorkItemKind::class)],
             'project_id' => 'nullable|exists:projects,id',
             'description' => 'nullable|string',
         ]);

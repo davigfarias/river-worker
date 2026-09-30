@@ -93,13 +93,14 @@
         </form>
     </flux:modal>
 
-    <flux:modal name="add-work-item" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-md">
+    <flux:modal name="add-work-item" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-xl">
         <form wire:submit="createWorkItem" class="space-y-5">
             <div>
                 <flux:heading size="lg">Nova demanda</flux:heading>
                 <flux:text class="mt-2">Vinculada a {{ $project->name }}.</flux:text>
             </div>
             <flux:input label="Título" wire:model="workItemTitle" />
+            <x-work-item-kind-picker model="workItemKind" :value="$workItemKind" />
             <div class="flex"><flux:spacer /><flux:button type="submit" variant="primary">Criar demanda</flux:button></div>
         </form>
     </flux:modal>

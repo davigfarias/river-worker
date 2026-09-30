@@ -2,6 +2,7 @@
 
 use App\Actions\CreateWorkItem;
 use App\Enums\ReadingStatus;
+use App\Enums\WorkItemKind;
 use App\Enums\WorkItemStatus;
 use App\Models\AccessToken;
 use App\Models\Project;
@@ -236,4 +237,23 @@ test('the dashboard summarises the pipeline, reading and recent docs', function 
         ->and($data['weekDeploys'])->toBe(1);
 
     Livewire::test('pages::dashboard')->assertSee('Arquitetura de Filas')->assertSee('Refatoração');
+});
+
+test('a work item is created with the chosen kind', function () {
+    $project = Project::factory()->create();
+
+    Livewire::test('pages::projeto', ['slug' => $project->slug])
+        ->set('workItemTitle', 'Corrigir login')
+        ->set('workItemKind', 'fix')
+        ->call('createWorkItem');
+
+    expect($project->workItems()->first()->kind)->toBe(WorkItemKind::Fix);
+});
+
+test('an invalid work item kind is rejected', function () {
+    Livewire::test('pages::dashboard')
+        ->set('title', 'Qualquer')
+        ->set('kind', 'inexistente')
+        ->call('createWorkItem')
+        ->assertHasErrors(['kind']);
 });

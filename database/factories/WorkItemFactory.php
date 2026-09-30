@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\WorkItemKind;
 use App\Enums\WorkItemStatus;
 use App\Models\Project;
 use App\Models\WorkItem;
@@ -22,6 +23,7 @@ class WorkItemFactory extends Factory
         return [
             'project_id' => Project::factory(),
             'title' => fake()->sentence(4),
+            'kind' => WorkItemKind::Feat,
             'description' => fake()->paragraph(),
             'status' => WorkItemStatus::Backlog,
         ];

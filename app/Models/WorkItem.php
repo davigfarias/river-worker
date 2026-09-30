@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\WorkItemKind;
 use App\Enums\WorkItemStatus;
 use Database\Factories\WorkItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -19,6 +20,7 @@ use Laravel\Scout\Searchable;
 #[Fillable([
     'project_id',
     'title',
+    'kind',
     'description',
     'status',
     'deployed_at',
@@ -37,6 +39,7 @@ class WorkItem extends Model
     public function casts(): array
     {
         return [
+            'kind' => WorkItemKind::class,
             'status' => WorkItemStatus::class,
             'deployed_at' => 'datetime',
         ];
