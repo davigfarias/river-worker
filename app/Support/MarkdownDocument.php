@@ -11,6 +11,7 @@ use League\CommonMark\Extension\CommonMark\Node\Block\Heading;
 use League\CommonMark\Extension\Footnote\FootnoteExtension;
 use League\CommonMark\Extension\HeadingPermalink\HeadingPermalinkExtension;
 use League\CommonMark\Extension\Highlight\HighlightExtension;
+use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\MarkdownConverter;
 use League\CommonMark\Node\NodeIterator;
 use League\CommonMark\Node\StringContainerHelper;
@@ -51,6 +52,7 @@ final readonly class MarkdownDocument
 
         $environment
             ->addExtension(new CommonMarkCoreExtension)
+            ->addExtension(new TableExtension)
             ->addExtension(new FootnoteExtension)
             ->addExtension(new HighlightExtension)
             ->addExtension(new HeadingPermalinkExtension);

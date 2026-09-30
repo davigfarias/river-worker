@@ -238,3 +238,17 @@
     overflow-x: auto;
     margin: 1rem 0;
 }
+
+/* Títulos menores no markdown renderizado (o padrão do typography é grande demais). */
+.prose :where(h1) { font-size: 1.5em; margin-top: 1.5em; margin-bottom: 0.6em; }
+.prose :where(h2) { font-size: 1.25em; margin-top: 1.4em; margin-bottom: 0.5em; }
+.prose :where(h3) { font-size: 1.1em; margin-top: 1.2em; margin-bottom: 0.4em; }
+.prose :where(h4, h5, h6) { font-size: 1em; }
+
+/* Títulos menores no editor EasyMDE (padrão: calc(1.375rem + 1.5vw) etc.). */
+.CodeMirror.cm-s-easymde .cm-header-1 { font-size: 1.4rem; }
+.CodeMirror.cm-s-easymde .cm-header-2 { font-size: 1.25rem; }
+.CodeMirror.cm-s-easymde .cm-header-3 { font-size: 1.125rem; }
+.CodeMirror.cm-s-easymde .cm-header-4,
+.CodeMirror.cm-s-easymde .cm-header-5,
+.CodeMirror.cm-s-easymde .cm-header-6 { font-size: 1rem; }
