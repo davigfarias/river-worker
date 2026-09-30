@@ -165,6 +165,22 @@ test('the spec is edited inline and saved as markdown', function () {
     expect($item->fresh()->description)->toBe('## Nova spec');
 });
 
+test('the title is edited inline and validated', function () {
+    $item = WorkItem::factory()->create(['title' => 'Antigo']);
+
+    Livewire::test('pages::trabalho', ['id' => $item->id])
+        ->set('editingTitle', true)
+        ->set('title', '')
+        ->call('saveTitle')
+        ->assertHasErrors(['title' => 'required'])
+        ->set('title', 'Novo título')
+        ->call('saveTitle')
+        ->assertSet('editingTitle', false)
+        ->assertSee('Novo título');
+
+    expect($item->fresh()->title)->toBe('Novo título');
+});
+
 test('the dashboard summarises the pipeline, reading and recent docs', function () {
     $project = Project::factory()->create();
     WorkItem::factory()->count(2)->create(['project_id' => $project->id, 'status' => WorkItemStatus::Backlog]);

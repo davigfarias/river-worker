@@ -6,7 +6,18 @@
 
     <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div class="min-w-0">
-            <flux:heading size="xl" level="1">{{ $item->title }}</flux:heading>
+            @if ($editingTitle)
+                <form wire:submit="saveTitle" wire:key="title-edit" x-on:keydown.escape="$wire.cancelTitleEdit()" class="flex items-start gap-2">
+                    <flux:input wire:model="title" autofocus aria-label="Título da demanda" class="min-w-72" />
+                    <flux:button type="submit" variant="primary" icon="check" aria-label="Salvar título" />
+                    <flux:button variant="ghost" icon="x-mark" wire:click="cancelTitleEdit" aria-label="Cancelar" />
+                </form>
+            @else
+                <div class="group flex items-center gap-2" wire:key="title-view">
+                    <flux:heading size="xl" level="1" class="cursor-text" title="Duplo clique para editar" wire:dblclick="$set('editingTitle', true)">{{ $item->title }}</flux:heading>
+                    <flux:button size="xs" variant="ghost" icon="pencil-square" wire:click="$set('editingTitle', true)" aria-label="Editar título" />
+                </div>
+            @endif
             @if ($item->project)
                 <flux:link href="{{ route('projetos.show', $item->project->slug) }}" wire:navigate class="text-sm">{{ $item->project->name }}</flux:link>
             @else

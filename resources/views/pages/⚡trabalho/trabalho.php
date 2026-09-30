@@ -23,6 +23,10 @@ new class extends Component
     #[Locked]
     public int $workItemId;
 
+    public string $title = '';
+
+    public bool $editingTitle = false;
+
     public string $description = '';
 
     public bool $editingSpec = false;
@@ -41,6 +45,7 @@ new class extends Component
 
         $this->workItemId = $item->id;
         $this->fill([
+            'title' => $item->title,
             'description' => (string) $item->description,
             'deployVersion' => $item->deploy_version,
             'releaseNotes' => $item->release_notes,
@@ -71,6 +76,24 @@ new class extends Component
         }
 
         return $outcome->success;
+    }
+
+    public function saveTitle(UpdateWorkItem $action): void
+    {
+        $validated = $this->validate([
+            'title' => 'required|string|max:255',
+        ]);
+
+        if ($this->report($action->handle($this->workItemId, $validated))) {
+            $this->editingTitle = false;
+        }
+    }
+
+    public function cancelTitleEdit(): void
+    {
+        $this->reset('editingTitle');
+        $this->title = $this->item->title;
+        $this->resetValidation('title');
     }
 
     public function saveSpec(UpdateWorkItem $action): void
