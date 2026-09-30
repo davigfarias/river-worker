@@ -181,6 +181,25 @@ test('the title is edited inline and validated', function () {
     expect($item->fresh()->title)->toBe('Novo título');
 });
 
+test('a work item is deleted from the project listing', function () {
+    $project = Project::factory()->create();
+    $item = WorkItem::factory()->create(['project_id' => $project->id]);
+    $foreign = WorkItem::factory()->create();
+
+    Livewire::test('pages::projeto', ['slug' => $project->slug])
+        ->call('confirmDeleteWorkItem', $item->id)
+        ->assertSet('workItemToDeleteId', $item->id)
+        ->call('deleteWorkItem')
+        ->assertSet('workItemToDeleteId', null);
+
+    Livewire::test('pages::projeto', ['slug' => $project->slug])
+        ->call('confirmDeleteWorkItem', $foreign->id)
+        ->assertNotFound();
+
+    expect(WorkItem::find($item->id))->toBeNull()
+        ->and(WorkItem::find($foreign->id))->not->toBeNull();
+});
+
 test('the dashboard summarises the pipeline, reading and recent docs', function () {
     $project = Project::factory()->create();
     WorkItem::factory()->count(2)->create(['project_id' => $project->id, 'status' => WorkItemStatus::Backlog]);

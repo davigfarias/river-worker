@@ -2,6 +2,7 @@
 
 use App\Actions\CreateWorkItem;
 use App\Actions\DeleteProject;
+use App\Actions\DeleteWorkItem;
 use App\Actions\SaveProject;
 use App\Actions\SaveProjectDoc;
 use App\Models\Project;
@@ -20,6 +21,8 @@ new class extends Component
     public string $docFilter = '';
 
     public string $workItemTitle = '';
+
+    public ?int $workItemToDeleteId = null;
 
     public string $docTitle = '';
 
@@ -78,6 +81,27 @@ new class extends Component
         }
 
         $this->redirectRoute('trabalho.show', $outcome->data->id, navigate: true);
+    }
+
+    public function confirmDeleteWorkItem(int $id): void
+    {
+        abort_unless($this->project->workItems->contains('id', $id), 404);
+
+        $this->workItemToDeleteId = $id;
+        $this->modal('delete-work-item')->show();
+    }
+
+    public function deleteWorkItem(DeleteWorkItem $action): void
+    {
+        abort_unless($this->project->workItems->contains('id', $this->workItemToDeleteId), 404);
+
+        $outcome = $action->handle($this->workItemToDeleteId);
+
+        $this->reset('workItemToDeleteId');
+        $this->modal('delete-work-item')->close();
+        unset($this->project);
+
+        Flux::toast(duration: 2500, text: $outcome->message, variant: $outcome->success ? 'success' : 'danger');
     }
 
     public function createDoc(SaveProjectDoc $action): void

@@ -55,10 +55,13 @@
     </div>
     <div class="divide-surface-variant border-surface-variant divide-y rounded-xl border">
         @forelse ($project->workItems as $item)
-            <a wire:key="item-{{ $item->id }}" href="{{ route('trabalho.show', $item->id) }}" wire:navigate class="hover:bg-surface-variant/40 flex items-center justify-between gap-3 px-4 py-3 transition-colors">
-                <span>{{ $item->title }}</span>
-                <flux:badge size="sm" :color="$item->status->badgeColor()">{{ $item->status->label() }}</flux:badge>
-            </a>
+            <div wire:key="item-{{ $item->id }}" class="hover:bg-surface-variant/40 flex items-center gap-2 pr-2 transition-colors">
+                <a href="{{ route('trabalho.show', $item->id) }}" wire:navigate class="flex min-w-0 flex-1 items-center justify-between gap-3 py-3 pl-4">
+                    <span>{{ $item->title }}</span>
+                    <flux:badge size="sm" :color="$item->status->badgeColor()">{{ $item->status->label() }}</flux:badge>
+                </a>
+                <flux:button size="xs" variant="ghost" icon="trash" wire:click="confirmDeleteWorkItem({{ $item->id }})" aria-label="Excluir demanda" />
+            </div>
         @empty
             <flux:text class="p-4">Nenhuma demanda neste projeto.</flux:text>
         @endforelse
@@ -97,6 +100,20 @@
             <flux:textarea label="Visão geral" wire:model="description" rows="3" />
             <div class="flex"><flux:spacer /><flux:button type="submit" variant="primary">Salvar</flux:button></div>
         </form>
+    </flux:modal>
+
+    <flux:modal name="delete-work-item" class="min-w-88">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Excluir demanda?</flux:heading>
+                <flux:text class="mt-2">Esta ação não pode ser desfeita.</flux:text>
+            </div>
+            <div class="flex gap-2">
+                <flux:spacer />
+                <flux:modal.close><flux:button variant="ghost">Cancelar</flux:button></flux:modal.close>
+                <flux:button variant="danger" wire:click="deleteWorkItem">Excluir</flux:button>
+            </div>
+        </div>
     </flux:modal>
 
     <flux:modal name="delete-project" class="min-w-88">
