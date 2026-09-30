@@ -152,16 +152,17 @@ test('a work item created from the project page is linked to that project', func
     expect($project->workItems()->pluck('title')->all())->toBe(['Da página do projeto']);
 });
 
-test('the project is linked afterwards from the work item page', function () {
-    $project = Project::factory()->create();
-    $item = WorkItem::factory()->create(['project_id' => null]);
+test('the spec is edited inline and saved as markdown', function () {
+    $item = WorkItem::factory()->create(['description' => 'antiga']);
 
     Livewire::test('pages::trabalho', ['id' => $item->id])
-        ->assertSee('Sem projeto: vincular')
-        ->set('project_id', (string) $project->id)
-        ->call('saveSpec');
+        ->set('editingSpec', true)
+        ->set('description', '## Nova spec')
+        ->call('saveSpec')
+        ->assertSet('editingSpec', false)
+        ->assertSeeHtml('<h2>Nova spec</h2>');
 
-    expect($item->fresh()->project_id)->toBe($project->id);
+    expect($item->fresh()->description)->toBe('## Nova spec');
 });
 
 test('the dashboard summarises the pipeline, reading and recent docs', function () {

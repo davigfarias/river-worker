@@ -252,3 +252,9 @@
 .CodeMirror.cm-s-easymde .cm-header-4,
 .CodeMirror.cm-s-easymde .cm-header-5,
 .CodeMirror.cm-s-easymde .cm-header-6 { font-size: 1rem; }
+
+/* Editor da especificação da demanda: fonte maior. */
+.spec-editor .CodeMirror { font-size: 1.0625rem; line-height: 1.6; }
+
+/* Tabelas largas rolam dentro do artigo em vez de invadir a coluna do TOC. */
+.prose :where(table) { display: block; overflow-x: auto; }

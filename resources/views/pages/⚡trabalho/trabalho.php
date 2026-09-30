@@ -23,10 +23,6 @@ new class extends Component
     #[Locked]
     public int $workItemId;
 
-    public string $title = '';
-
-    public ?int $project_id = null;
-
     public string $description = '';
 
     public bool $editingSpec = false;
@@ -45,8 +41,6 @@ new class extends Component
 
         $this->workItemId = $item->id;
         $this->fill([
-            'title' => $item->title,
-            'project_id' => $item->project_id,
             'description' => (string) $item->description,
             'deployVersion' => $item->deploy_version,
             'releaseNotes' => $item->release_notes,
@@ -82,8 +76,6 @@ new class extends Component
     public function saveSpec(UpdateWorkItem $action): void
     {
         $validated = $this->validate([
-            'title' => 'required|string|max:255',
-            'project_id' => 'nullable|exists:projects,id',
             'description' => 'nullable|string',
         ]);
 

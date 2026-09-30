@@ -10,7 +10,7 @@
             @if ($item->project)
                 <flux:link href="{{ route('projetos.show', $item->project->slug) }}" wire:navigate class="text-sm">{{ $item->project->name }}</flux:link>
             @else
-                <flux:badge as="button" size="sm" color="amber" icon="link" wire:click="$set('editingSpec', true)">Sem projeto: vincular</flux:badge>
+                <flux:badge size="sm" color="amber">Sem projeto</flux:badge>
             @endif
         </div>
 
@@ -33,17 +33,19 @@
             </x-slot:actions>
 
             @if ($editingSpec)
-                <div class="space-y-4" wire:key="spec-edit">
-                    <flux:input label="Título" wire:model="title" />
-                    <flux:select label="Projeto" wire:model="project_id" placeholder="Sem projeto">
-                        @foreach ($this->projects as $project)
-                            <flux:select.option value="{{ $project->id }}">{{ $project->name }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                    <flux:textarea label="Especificação" wire:model="description" rows="8" />
+                <div
+                    class="spec-editor"
+                    wire:key="spec-edit"
+                    x-on:keydown.escape="$wire.set('editingSpec', false)"
+                    x-on:keydown.meta.enter.prevent="$wire.saveSpec()"
+                    x-on:keydown.ctrl.enter.prevent="$wire.saveSpec()"
+                >
+                    <div wire:ignore>
+                        <div x-data="markdownEditor('description', '220px')"><textarea x-ref="textarea"></textarea></div>
+                    </div>
                 </div>
             @elseif (filled($item->description))
-                <flux:text class="whitespace-pre-wrap">{{ $item->description }}</flux:text>
+                <article class="prose prose-lg dark:prose-invert max-w-none cursor-text" title="Duplo clique para editar" wire:dblclick="$set('editingSpec', true)">{!! Str::markdownRich($item->description, ['html_input' => 'strip']) !!}</article>
             @else
                 <x-empty-state icon="document-text" heading="Sem especificação" description="Descreva o escopo e os prompts base desta demanda." />
             @endif

@@ -31,7 +31,7 @@
         @php($rendered = $this->rendered)
 
         <div class="mt-2 grid gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
-            <div class="min-w-0">
+            <div class="min-w-0 overflow-hidden">
                 <flux:heading size="xl" level="1">{{ $doc->title }}</flux:heading>
                 <article class="prose dark:prose-invert mt-6 max-w-none">{!! $rendered['html'] !!}</article>
             </div>
@@ -39,12 +39,12 @@
             @if (count($rendered['headings']) > 0)
                 <nav aria-label="Neste documento" class="max-lg:order-first lg:sticky lg:top-4 lg:self-start">
                     <flux:heading size="sm" class="mb-3">Neste documento</flux:heading>
-                    <ul class="border-outline-variant/40 max-h-[70vh] space-y-1 overflow-y-auto border-s text-sm">
+                    <ul class="border-outline-variant/40 max-h-[70vh] space-y-1 overflow-x-hidden overflow-y-auto border-s text-sm">
                         @foreach ($rendered['headings'] as $heading)
                             <li wire:key="toc-{{ $heading['id'] }}">
                                 <a
                                     href="#{{ $heading['id'] }}"
-                                    class="text-on-surface-variant hover:text-primary focus-visible:outline-primary -ms-px block border-s border-transparent py-1 hover:border-current focus-visible:outline-2"
+                                    class="text-on-surface-variant hover:text-primary focus-visible:outline-primary -ms-px block break-words border-s border-transparent py-1 hover:border-current focus-visible:outline-2"
                                     style="padding-inline-start: {{ 0.75 + ($heading['level'] - 1) * 0.75 }}rem"
                                 >{{ $heading['title'] }}</a>
                             </li>
