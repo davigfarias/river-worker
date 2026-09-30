@@ -126,7 +126,7 @@ test('the deploy step is the last item of the timeline and opens the confirmatio
     $item = WorkItem::factory()->create(['status' => WorkItemStatus::ReadyDeploy]);
 
     Livewire::test('pages::trabalho', ['id' => $item->id])
-        ->assertSeeHtmlInOrder(['Pronto para deploy', 'Em produção', 'aria-label="Fazer deploy"'])
+        ->assertSeeHtmlInOrder(['Pronto pra Deploy', 'Em produção', 'aria-label="Fazer deploy"'])
         ->assertSee('Confirmar deploy?');
 });
 

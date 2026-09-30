@@ -21,13 +21,13 @@
     </div>
 
     {{-- Pipeline: onde está todo o trabalho, do backlog à produção. --}}
-    <div class="border-outline-variant/40 bg-surface-container-lowest grid grid-cols-2 overflow-hidden rounded-2xl border shadow-sm sm:grid-cols-3 lg:grid-cols-6" role="list" aria-label="Demandas por etapa">
+    <div class="border-outline-variant/40 bg-surface-container-lowest grid grid-cols-2 overflow-hidden rounded-2xl border shadow-sm sm:grid-cols-3 lg:grid-cols-7" role="list" aria-label="Demandas por etapa">
         @foreach (\App\Enums\WorkItemStatus::cases() as $status)
             @php($count = $data['pipeline'][$status->value] ?? 0)
-            <div wire:key="stage-{{ $status->value }}" role="listitem" class="border-outline-variant/30 relative border-s px-5 pt-5 pb-4 first:border-s-0 max-lg:[&:nth-child(n+3)]:border-t {{ $count === 0 ? 'opacity-60' : '' }}">
+            <div wire:key="stage-{{ $status->value }}" role="listitem" class="border-outline-variant/30 relative border-s px-3 pt-4 pb-3 first:border-s-0 max-lg:[&:nth-child(n+3)]:border-t {{ $count === 0 ? 'opacity-60' : '' }}">
                 <span class="{{ $status->barClass() }} absolute inset-x-0 top-0 h-1"></span>
-                <div class="text-3xl font-semibold tabular-nums">{{ $count }}</div>
-                <flux:text size="sm" class="mt-1">{{ $status->label() }}</flux:text>
+                <div class="text-2xl font-semibold tabular-nums">{{ $count }}</div>
+                <flux:text class="mt-1 text-xs leading-tight">{{ $status->label() }}</flux:text>
             </div>
         @endforeach
     </div>
@@ -153,7 +153,7 @@
     </div>
 
     {{-- Atalhos --}}
-    <nav aria-label="Atalhos" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    <nav aria-label="Atalhos" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
         @foreach ($this->shortcuts as $shortcut)
             <a wire:key="shortcut-{{ $shortcut['route'] }}" href="{{ route($shortcut['route']) }}" wire:navigate class="border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-variant/40 focus-visible:outline-primary flex items-center gap-3 rounded-xl border p-3 transition-colors focus-visible:outline-2">
                 <flux:icon :name="$shortcut['icon']" class="text-on-surface-variant size-5 shrink-0" />
