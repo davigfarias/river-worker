@@ -18,28 +18,36 @@
         </div>
     </div>
 
-    <div class="mb-4 flex items-center justify-between">
-        <flux:heading size="lg">Documentação</flux:heading>
-        <flux:modal.trigger name="add-doc"><flux:button size="sm" icon="plus">Novo documento</flux:button></flux:modal.trigger>
-    </div>
+    <x-island title="Documentação" icon="document-text" height="h-[34rem]">
+        <x-slot:actions>
+            <flux:badge size="sm" color="zinc">{{ $project->docs->count() }}</flux:badge>
+            <flux:modal.trigger name="add-doc"><flux:button size="sm" icon="plus">Novo documento</flux:button></flux:modal.trigger>
+        </x-slot:actions>
 
-    <div class="space-y-6">
-        @forelse ($this->docsByCategory as $category => $docs)
-            <section wire:key="category-{{ $category }}">
-                <flux:heading size="sm" class="text-on-surface-variant mb-2 uppercase">{{ $category }}</flux:heading>
-                <div class="divide-surface-variant border-surface-variant divide-y rounded-xl border">
-                    @foreach ($docs as $doc)
-                        <a wire:key="doc-{{ $doc->id }}" href="{{ route('projetos.docs.show', ['project' => $project->id, 'doc' => $doc->id]) }}" wire:navigate class="hover:bg-surface-variant/40 flex items-center gap-3 px-4 py-3 transition-colors">
-                            <flux:icon name="document-text" class="size-5" />
-                            <span>{{ $doc->title }}</span>
-                        </a>
-                    @endforeach
-                </div>
-            </section>
-        @empty
-            <x-empty-state icon="document-text" heading="Sem documentação" description="Crie o primeiro documento em Markdown deste projeto." />
-        @endforelse
-    </div>
+        <flux:input icon="magnifying-glass" wire:model.live.debounce.250ms="docFilter" placeholder="Filtrar documentos por título ou categoria..." clearable class="mb-5" />
+
+        <div class="space-y-6">
+            @forelse ($this->docsByCategory as $category => $docs)
+                <section wire:key="category-{{ $category }}">
+                    <flux:heading size="sm" class="text-on-surface-variant mb-2">{{ $category }} <span class="font-normal">({{ $docs->count() }})</span></flux:heading>
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        @foreach ($docs as $doc)
+                            <a wire:key="doc-{{ $doc->id }}" href="{{ route('projetos.docs.show', ['project' => $project->id, 'doc' => $doc->id]) }}" wire:navigate class="border-surface-variant bg-surface-container-low hover:bg-surface-variant/40 focus-visible:outline-primary flex flex-col justify-between rounded-xl border p-4 transition-colors focus-visible:outline-2">
+                                <flux:text class="line-clamp-2 font-medium">{{ $doc->title }}</flux:text>
+                                <flux:text size="xs" class="text-on-surface-variant mt-3">Atualizado em {{ $doc->updated_at->format('d/m/Y') }}</flux:text>
+                            </a>
+                        @endforeach
+                    </div>
+                </section>
+            @empty
+                @if (filled($docFilter))
+                    <flux:text size="sm" class="text-on-surface-variant">Nenhum documento corresponde a "{{ $docFilter }}".</flux:text>
+                @else
+                    <x-empty-state icon="document-text" heading="Sem documentação" description="Crie o primeiro documento em Markdown deste projeto." />
+                @endif
+            @endforelse
+        </div>
+    </x-island>
 
     <div class="mt-10 mb-4 flex items-center justify-between">
         <flux:heading size="lg">Demandas</flux:heading>

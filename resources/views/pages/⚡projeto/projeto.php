@@ -17,6 +17,8 @@ new class extends Component
     #[Locked]
     public int $projectId;
 
+    public string $docFilter = '';
+
     public string $workItemTitle = '';
 
     public string $docTitle = '';
@@ -53,7 +55,14 @@ new class extends Component
     #[Computed]
     public function docsByCategory(): Collection
     {
-        return $this->project->docs->groupBy('category')->sortKeys();
+        $term = mb_strtolower(trim($this->docFilter));
+
+        return $this->project->docs
+            ->when($term !== '', fn ($docs) => $docs->filter(
+                fn ($doc): bool => str_contains(mb_strtolower($doc->title.' '.$doc->category), $term)
+            ))
+            ->groupBy('category')
+            ->sortKeys();
     }
 
     public function createWorkItem(CreateWorkItem $action): void
@@ -86,7 +95,7 @@ new class extends Component
             return;
         }
 
-        $this->redirectRoute('projetos.docs.show', ['project' => $this->projectId, 'doc' => $outcome->data->id], navigate: true);
+        $this->redirectRoute('projetos.docs.show', ['project' => $this->projectId, 'doc' => $outcome->data->id, 'editar' => 1], navigate: true);
     }
 
     public function updateProject(SaveProject $action): void

@@ -40,12 +40,10 @@
                             <flux:select.option value="{{ $project->id }}">{{ $project->name }}</flux:select.option>
                         @endforeach
                     </flux:select>
-                    <div wire:ignore class="border-surface-variant rounded-xl border">
-                        <div x-data="markdownEditor('description', '180px')"><textarea x-ref="textarea"></textarea></div>
-                    </div>
+                    <flux:textarea label="Especificação" wire:model="description" rows="8" />
                 </div>
             @elseif (filled($item->description))
-                <article class="prose prose-sm dark:prose-invert max-w-none">{!! Str::markdownRich((string) $item->description, ['html_input' => 'strip']) !!}</article>
+                <flux:text class="whitespace-pre-wrap">{{ $item->description }}</flux:text>
             @else
                 <x-empty-state icon="document-text" heading="Sem especificação" description="Descreva o escopo e os prompts base desta demanda." />
             @endif

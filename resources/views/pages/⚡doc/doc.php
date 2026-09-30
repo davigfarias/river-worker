@@ -3,9 +3,11 @@
 use App\Actions\DeleteProjectDoc;
 use App\Actions\SaveProjectDoc;
 use App\Models\ProjectDoc;
+use App\Support\MarkdownDocument;
 use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new class extends Component
@@ -22,6 +24,7 @@ new class extends Component
 
     public string $content = '';
 
+    #[Url(as: 'editar')]
     public bool $editing = false;
 
     public function mount(int $project, int $doc): void
@@ -39,6 +42,15 @@ new class extends Component
         return ProjectDoc::with('project')->findOrFail($this->docId);
     }
 
+    /**
+     * @return array{html: string, headings: list<array{level: int, title: string, id: string}>}
+     */
+    #[Computed]
+    public function rendered(): array
+    {
+        return MarkdownDocument::render((string) $this->doc->content);
+    }
+
     public function save(SaveProjectDoc $action): void
     {
         $validated = $this->validate([
@@ -51,7 +63,7 @@ new class extends Component
 
         if ($outcome->success) {
             $this->editing = false;
-            unset($this->doc);
+            unset($this->doc, $this->rendered);
         }
 
         Flux::toast(duration: 2500, text: $outcome->message, variant: $outcome->success ? 'success' : 'danger');
