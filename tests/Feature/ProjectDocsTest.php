@@ -70,9 +70,9 @@ test('the project page filters docs by title or category', function () {
         ->set('docFilter', 'financeiro')->assertSee('Regras de Cobrança')->assertDontSee('Arquitetura de Filas');
 });
 
-test('the work item spec is edited and shown as plain text', function () {
-    $item = WorkItem::factory()->create(['description' => '**nao** markdown']);
+test('the work item spec is rendered as markdown', function () {
+    $item = WorkItem::factory()->create(['description' => '**negrito** aqui']);
 
     Livewire::test('pages::trabalho', ['id' => $item->id])
-        ->assertSee('**nao** markdown', escape: false);
+        ->assertSeeHtml('<strong>negrito</strong>');
 });
