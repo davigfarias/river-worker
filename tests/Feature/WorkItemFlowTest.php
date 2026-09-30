@@ -200,6 +200,19 @@ test('a work item is deleted from the project listing', function () {
         ->and(WorkItem::find($foreign->id))->not->toBeNull();
 });
 
+test('project work items are split into active and delivered tabs', function () {
+    $project = Project::factory()->create();
+    WorkItem::factory()->create(['project_id' => $project->id, 'title' => 'Em andamento', 'status' => WorkItemStatus::Testing]);
+    WorkItem::factory()->create(['project_id' => $project->id, 'title' => 'Já no ar', 'status' => WorkItemStatus::Deployed, 'deployed_at' => now()]);
+
+    Livewire::test('pages::projeto', ['slug' => $project->slug])
+        ->assertSee('Em andamento')
+        ->assertDontSee('Já no ar')
+        ->set('workItemTab', 'entregues')
+        ->assertSee('Já no ar')
+        ->assertDontSee('Em andamento');
+});
+
 test('the dashboard summarises the pipeline, reading and recent docs', function () {
     $project = Project::factory()->create();
     WorkItem::factory()->count(2)->create(['project_id' => $project->id, 'status' => WorkItemStatus::Backlog]);

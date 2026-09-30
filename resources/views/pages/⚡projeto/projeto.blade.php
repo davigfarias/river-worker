@@ -53,8 +53,20 @@
         <flux:heading size="lg">Demandas</flux:heading>
         <flux:modal.trigger name="add-work-item"><flux:button size="sm" icon="plus">Nova demanda</flux:button></flux:modal.trigger>
     </div>
+    @php($isDeliveredTab = $workItemTab === 'entregues')
+    <flux:radio.group wire:model.live="workItemTab" variant="segmented" class="mb-3">
+        <flux:radio value="ativas">
+            Ativas
+            <flux:badge size="sm">{{ $this->activeWorkItems->count() }}</flux:badge>
+        </flux:radio>
+        <flux:radio value="entregues">
+            Entregues
+            <flux:badge size="sm">{{ $this->deliveredWorkItems->count() }}</flux:badge>
+        </flux:radio>
+    </flux:radio.group>
+
     <div class="divide-surface-variant border-surface-variant divide-y rounded-xl border">
-        @forelse ($project->workItems as $item)
+        @forelse (($isDeliveredTab ? $this->deliveredWorkItems : $this->activeWorkItems) as $item)
             <div wire:key="item-{{ $item->id }}" class="hover:bg-surface-variant/40 flex items-center gap-2 pr-2 transition-colors">
                 <a href="{{ route('trabalho.show', $item->id) }}" wire:navigate class="flex min-w-0 flex-1 items-center justify-between gap-3 py-3 pl-4">
                     <span>{{ $item->title }}</span>
@@ -63,7 +75,7 @@
                 <flux:button size="xs" variant="ghost" icon="trash" wire:click="confirmDeleteWorkItem({{ $item->id }})" aria-label="Excluir demanda" />
             </div>
         @empty
-            <flux:text class="p-4">Nenhuma demanda neste projeto.</flux:text>
+            <flux:text class="p-4">{{ $isDeliveredTab ? 'Nenhuma demanda entregue ainda.' : 'Nenhuma demanda ativa neste projeto.' }}</flux:text>
         @endforelse
     </div>
 

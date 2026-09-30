@@ -5,12 +5,14 @@ use App\Actions\DeleteProject;
 use App\Actions\DeleteWorkItem;
 use App\Actions\SaveProject;
 use App\Actions\SaveProjectDoc;
+use App\Enums\WorkItemStatus;
 use App\Models\Project;
 use App\Models\ProjectDoc;
 use Flux\Flux;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new class extends Component
@@ -21,6 +23,9 @@ new class extends Component
     public string $docFilter = '';
 
     public string $workItemTitle = '';
+
+    #[Url(as: 'demandas')]
+    public string $workItemTab = 'ativas';
 
     public ?int $workItemToDeleteId = null;
 
@@ -81,6 +86,24 @@ new class extends Component
         }
 
         $this->redirectRoute('trabalho.show', $outcome->data->id, navigate: true);
+    }
+
+    /**
+     * @return Collection<int, \App\Models\WorkItem>
+     */
+    #[Computed]
+    public function activeWorkItems(): Collection
+    {
+        return $this->project->workItems->where('status', '!==', WorkItemStatus::Deployed)->values();
+    }
+
+    /**
+     * @return Collection<int, \App\Models\WorkItem>
+     */
+    #[Computed]
+    public function deliveredWorkItems(): Collection
+    {
+        return $this->project->workItems->where('status', WorkItemStatus::Deployed)->values();
     }
 
     public function confirmDeleteWorkItem(int $id): void
