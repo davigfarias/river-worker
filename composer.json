@@ -17,8 +17,8 @@
         "laravel/framework": "^13.17",
         "laravel/scout": "*",
         "laravel/tinker": "^3.0",
-        "livewire/blaze": "^1.0",
-        "livewire/flux": "^2.13.1",
+        "livewire/blaze": "1.0.13",
+        "livewire/flux": "2.15.0",
         "livewire/livewire": "^4.1",
         "phpoffice/phpword": "^1.4"
     },

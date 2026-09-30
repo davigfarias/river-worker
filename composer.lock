@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0f150a6aaf013b6edbf07ae342d3f05e",
+    "content-hash": "8061e6cf8c214630341c3fa7ec931655",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -2514,16 +2514,16 @@
         },
         {
             "name": "livewire/blaze",
-            "version": "v1.0.19",
+            "version": "v1.0.13",
             "source": {
                 "type": "git",
                 "url": "https://github.com/livewire/blaze.git",
-                "reference": "fceb689d9cda6115e30b30819035cca46ac406dc"
+                "reference": "f0ad52cde415050739431142a519e1470cb2dd19"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/livewire/blaze/zipball/fceb689d9cda6115e30b30819035cca46ac406dc",
-                "reference": "fceb689d9cda6115e30b30819035cca46ac406dc",
+                "url": "https://api.github.com/repos/livewire/blaze/zipball/f0ad52cde415050739431142a519e1470cb2dd19",
+                "reference": "f0ad52cde415050739431142a519e1470cb2dd19",
                 "shasum": ""
             },
             "require": {
@@ -2566,22 +2566,22 @@
             "description": "A tool for optimizing Blade component performance by folding them into parent templates",
             "support": {
                 "issues": "https://github.com/livewire/blaze/issues",
-                "source": "https://github.com/livewire/blaze/tree/v1.0.19"
+                "source": "https://github.com/livewire/blaze/tree/v1.0.13"
             },
-            "time": "2026-09-15T09:45:15+00:00"
+            "time": "2026-07-27T11:04:03+00:00"
         },
         {
             "name": "livewire/flux",
-            "version": "v2.20.1",
+            "version": "v2.15.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/livewire/flux.git",
-                "reference": "ee9ad7f91087ea117a2c80993a14cb25bb902f70"
+                "reference": "c570fb836278e9be881d08b7e386a1a62ab9faf7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/livewire/flux/zipball/ee9ad7f91087ea117a2c80993a14cb25bb902f70",
-                "reference": "ee9ad7f91087ea117a2c80993a14cb25bb902f70",
+                "url": "https://api.github.com/repos/livewire/flux/zipball/c570fb836278e9be881d08b7e386a1a62ab9faf7",
+                "reference": "c570fb836278e9be881d08b7e386a1a62ab9faf7",
                 "shasum": ""
             },
             "require": {
@@ -2589,7 +2589,7 @@
                 "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
                 "illuminate/view": "^10.0|^11.0|^12.0|^13.0",
                 "laravel/prompts": "^0.1|^0.2|^0.3",
-                "livewire/livewire": "^3.7.4|^4.0|dev-main",
+                "livewire/livewire": "^3.7.4|^4.0",
                 "php": "^8.1",
                 "symfony/console": "^6.0|^7.0|^8.0"
             },
@@ -2632,9 +2632,9 @@
             ],
             "support": {
                 "issues": "https://github.com/livewire/flux/issues",
-                "source": "https://github.com/livewire/flux/tree/v2.20.1"
+                "source": "https://github.com/livewire/flux/tree/v2.15.0"
             },
-            "time": "2026-09-28T18:14:53+00:00"
+            "time": "2026-06-19T02:25:18+00:00"
         },
         {
             "name": "livewire/livewire",
