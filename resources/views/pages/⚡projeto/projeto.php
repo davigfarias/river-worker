@@ -3,6 +3,7 @@
 use App\Actions\CreateWorkItem;
 use App\Actions\DeleteProject;
 use App\Actions\DeleteWorkItem;
+use App\Actions\ListRepositoryCommits;
 use App\Actions\SaveProject;
 use App\Actions\SaveProjectDoc;
 use App\Enums\WorkItemKind;
@@ -75,6 +76,35 @@ new class extends Component
             ))
             ->groupBy('category')
             ->sortKeys();
+    }
+
+    public int $commitPages = 1;
+
+    /**
+     * @return array{commits: list<array{sha: string, message: string, author: ?string, committed_at: ?string, url: string}>, error: ?string, hasMore: bool}
+     */
+    #[Computed]
+    public function commits(): array
+    {
+        $action = app(ListRepositoryCommits::class);
+        $commits = [];
+
+        foreach (range(1, $this->commitPages) as $page) {
+            $outcome = $action->handle($this->project, $page);
+
+            if (! $outcome->success) {
+                return ['commits' => $commits, 'error' => $outcome->message, 'hasMore' => false];
+            }
+
+            $commits = [...$commits, ...$outcome->data];
+        }
+
+        return ['commits' => $commits, 'error' => null, 'hasMore' => count($outcome->data) === ListRepositoryCommits::PER_PAGE];
+    }
+
+    public function loadMoreCommits(): void
+    {
+        $this->commitPages = min($this->commitPages + 1, 10);
     }
 
     public function createWorkItem(CreateWorkItem $action): void
@@ -163,7 +193,8 @@ new class extends Component
         $outcome = $action->handle($this->projectId, $validated);
 
         $this->modal('edit-project')->close();
-        unset($this->project);
+        unset($this->project, $this->commits);
+        $this->reset('commitPages');
 
         Flux::toast(duration: 2500, text: $outcome->message, variant: $outcome->success ? 'success' : 'danger');
     }

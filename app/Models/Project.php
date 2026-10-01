@@ -40,4 +40,16 @@ class Project extends Model
     {
         return $this->hasMany(WorkItem::class);
     }
+
+    /**
+     * "owner/repo" extraído da URL do repositório, ou null se não for GitHub.
+     */
+    public function githubRepository(): ?string
+    {
+        if (! preg_match('#^https?://(?:www\.)?github\.com/([\w.-]+)/([\w.-]+?)(?:\.git)?/?$#i', (string) $this->repository_url, $matches)) {
+            return null;
+        }
+
+        return $matches[1].'/'.$matches[2];
+    }
 }

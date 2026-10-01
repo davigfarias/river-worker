@@ -18,6 +18,9 @@
         </div>
     </div>
 
+    @php($githubRepository = $project->githubRepository())
+
+    <div @class(['grid grid-cols-1 gap-6', 'lg:grid-cols-2' => $githubRepository])>
     <x-island title="Documentação" icon="document-text" height="h-[34rem]">
         <x-slot:actions>
             <flux:badge size="sm" color="zinc">{{ $project->docs->count() }}</flux:badge>
@@ -30,7 +33,7 @@
             @forelse ($this->docsByCategory as $category => $docs)
                 <section wire:key="category-{{ $category }}">
                     <flux:heading size="sm" class="text-on-surface-variant mb-2">{{ $category }} <span class="font-normal">({{ $docs->count() }})</span></flux:heading>
-                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    <div @class(['grid grid-cols-1 gap-3 sm:grid-cols-2', 'xl:grid-cols-3' => ! $githubRepository])>
                         @foreach ($docs as $doc)
                             <a wire:key="doc-{{ $doc->id }}" href="{{ route('projetos.docs.show', ['project' => $project->id, 'doc' => $doc->id]) }}" wire:navigate class="border-surface-variant bg-surface-container-low hover:bg-surface-variant/40 focus-visible:outline-primary flex flex-col justify-between rounded-xl border p-4 transition-colors focus-visible:outline-2">
                                 <flux:text class="line-clamp-2 font-medium">{{ $doc->title }}</flux:text>
@@ -48,6 +51,42 @@
             @endforelse
         </div>
     </x-island>
+
+    @if ($githubRepository)
+        @php($commits = $this->commits)
+        <x-island title="Commits" icon="code-bracket" height="h-[34rem]">
+            <x-slot:actions>
+                <flux:badge size="sm" color="zinc" class="font-mono">{{ $githubRepository }}</flux:badge>
+            </x-slot:actions>
+
+            @if ($commits['error'])
+                <flux:callout icon="exclamation-triangle" variant="warning" :heading="$commits['error']" class="mb-4" />
+            @endif
+
+            <div class="divide-surface-variant divide-y">
+                @forelse ($commits['commits'] as $commit)
+                    <div wire:key="commit-{{ $commit['sha'] }}" class="flex items-start gap-3 py-2.5">
+                        <flux:link href="{{ $commit['url'] }}" target="_blank" class="shrink-0 font-mono text-xs">{{ Str::substr($commit['sha'], 0, 7) }}</flux:link>
+                        <span class="min-w-0 flex-1">
+                            <span class="block truncate text-sm">{{ $commit['message'] }}</span>
+                            <span class="text-on-surface-variant block text-xs">
+                                {{ $commit['author'] }}@if ($commit['committed_at']) · {{ \Illuminate\Support\Carbon::parse($commit['committed_at'])->timezone(config('app.timezone'))->format('d/m/Y H:i') }}@endif
+                            </span>
+                        </span>
+                    </div>
+                @empty
+                    @unless ($commits['error'])
+                        <x-empty-state icon="code-bracket" heading="Sem commits" description="Nenhum commit encontrado neste repositório." />
+                    @endunless
+                @endforelse
+            </div>
+
+            @if ($commits['hasMore'])
+                <flux:button size="sm" variant="ghost" wire:click="loadMoreCommits" class="mt-3 w-full">Carregar mais</flux:button>
+            @endif
+        </x-island>
+    @endif
+    </div>
 
     <div class="mt-10 mb-4 flex items-center justify-between">
         <flux:heading size="lg">Demandas</flux:heading>
