@@ -4,59 +4,91 @@
     @php($statuses = \App\Enums\WorkItemStatus::cases())
     @php($currentIndex = array_search($item->status, $statuses, true))
 
-    <flux:breadcrumbs class="mb-4">
-        <flux:breadcrumbs.item href="{{ route('projetos') }}" wire:navigate>Projetos</flux:breadcrumbs.item>
-        @if ($item->project)
-            <flux:breadcrumbs.item href="{{ route('projetos.show', $item->project->slug) }}" wire:navigate>{{ $item->project->name }}</flux:breadcrumbs.item>
-        @else
-            <flux:breadcrumbs.item>Sem projeto</flux:breadcrumbs.item>
-        @endif
-        <flux:breadcrumbs.item>Demanda</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
+    <div class="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-5">
+        {{-- Cabeçalho: navegação, título e prioridade --}}
+        <div class="min-w-0 lg:col-span-2">
+            <flux:breadcrumbs class="mb-4">
+                <flux:breadcrumbs.item href="{{ route('projetos') }}" wire:navigate>Projetos</flux:breadcrumbs.item>
+                @if ($item->project)
+                    <flux:breadcrumbs.item href="{{ route('projetos.show', $item->project->slug) }}" wire:navigate>{{ $item->project->name }}</flux:breadcrumbs.item>
+                @else
+                    <flux:breadcrumbs.item>Sem projeto</flux:breadcrumbs.item>
+                @endif
+                <flux:breadcrumbs.item>Demanda</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
 
-    <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <div class="min-w-0">
-            @if ($editingTitle)
-                <form wire:submit="saveTitle" wire:key="title-edit" x-on:keydown.escape="$wire.cancelTitleEdit()" class="max-w-xl space-y-3">
-                    <div class="flex items-start gap-2">
-                        <flux:input wire:model="title" autofocus aria-label="Título da demanda" class="min-w-72" />
-                        <flux:button type="submit" variant="primary" icon="check" aria-label="Salvar" />
-                        <flux:button variant="ghost" icon="x-mark" wire:click="cancelTitleEdit" aria-label="Cancelar" />
-                    </div>
-                    <x-work-item-kind-picker model="kind" :value="$kind" />
-                </form>
-            @else
-                <div class="group flex items-center gap-2" wire:key="title-view">
-                    <flux:badge :color="$item->kind->badgeColor()" class="font-mono" title="{{ $item->kind->label() }}">{{ $item->kind->value }}</flux:badge>
-                    <flux:heading size="xl" level="1" class="cursor-text" title="Duplo clique para editar" wire:dblclick="$set('editingTitle', true)">{{ $item->title }}</flux:heading>
-                    <flux:button size="xs" variant="ghost" icon="pencil-square" wire:click="$set('editingTitle', true)" aria-label="Editar título e natureza" />
+            <div class="mb-5 flex justify-between gap-4 items-start">
+                <div class="min-w-0">
+                    @if ($editingTitle)
+                        <form wire:submit="saveTitle" wire:key="title-edit" x-on:keydown.escape="$wire.cancelTitleEdit()" class="max-w-xl space-y-3">
+                            <div class="flex items-start gap-2">
+                                <flux:input wire:model="title" autofocus aria-label="Título da demanda" class="min-w-72" />
+                                <flux:button type="submit" variant="primary" icon="check" aria-label="Salvar" />
+                                <flux:button variant="ghost" icon="x-mark" wire:click="cancelTitleEdit" aria-label="Cancelar" />
+                            </div>
+                            <x-work-item-kind-picker model="kind" :value="$kind" />
+                        </form>
+                    @else
+                        <div class="group flex items-center gap-2" wire:key="title-view">
+                            <flux:badge :color="$item->kind->badgeColor()" class="font-mono" title="{{ $item->kind->label() }}">{{ $item->kind->value }}</flux:badge>
+                            <flux:heading size="xl" level="1" class="cursor-text" title="Duplo clique para editar" wire:dblclick="$set('editingTitle', true)">{{ $item->title }}</flux:heading>
+                            <flux:button size="xs" variant="ghost" icon="pencil-square" wire:click="$set('editingTitle', true)" aria-label="Editar título e natureza" />
+                        </div>
+                    @endif
                 </div>
-            @endif
+
+                <flux:modal.trigger name="delete-work-item">
+                    <flux:button variant="ghost" icon="trash" aria-label="Excluir demanda" />
+                </flux:modal.trigger>
+            </div>
+
+            {{-- Prioridade (opcional, manual) --}}
+            @php($priority = $this->priority)
+            <div class="border-outline-variant/40 bg-surface-container-lowest flex flex-wrap items-center gap-3 rounded-2xl border px-5 py-3 shadow-sm" wire:key="priority-strip">
+                <flux:icon name="flag" class="text-on-surface-variant size-5 shrink-0" />
+                <flux:heading>Prioridade</flux:heading>
+
+                @if ($priority)
+                    <flux:badge :color="$priority->priority->badgeColor()">{{ $priority->priority->label() }}</flux:badge>
+                    <flux:text class="min-w-0 flex-1">
+                        {{ $priority->explanation }}
+                        <span class="text-on-surface-variant">· {{ $priority->escalated ? 'escalada por regra' : 'score '.number_format($priority->score, 1, ',') }}</span>
+                    </flux:text>
+                    <flux:button size="sm" variant="ghost" icon="trash" wire:click="clearAssessment" aria-label="Limpar avaliação" />
+                    <flux:button size="sm" variant="ghost" icon="arrow-path" wire:click="startAssessment">Reavaliar</flux:button>
+                @else
+                    <flux:text class="text-on-surface-variant flex-1">Opcional. Responda algumas perguntas para medir a prioridade.</flux:text>
+                    <flux:button size="sm" variant="primary" icon="flag" wire:click="startAssessment">Avaliar prioridade</flux:button>
+                @endif
+            </div>
         </div>
 
-        <flux:modal.trigger name="delete-work-item">
-            <flux:button variant="ghost" icon="trash" aria-label="Excluir demanda" />
-        </flux:modal.trigger>
-    </div>
+        {{-- Commits do GitHub vinculados à demanda --}}
+        <x-island title="Commits" icon="link" height="h-64" class="lg:col-span-3" wire:key="island-commits">
+            <x-slot:actions>
+                <flux:badge size="sm" color="zinc">{{ $item->commits->count() }}</flux:badge>
+                @if ($item->project?->githubRepository())
+                    <flux:button size="sm" icon="plus" wire:click="openCommitPicker">Vincular commit</flux:button>
+                @endif
+            </x-slot:actions>
 
-    {{-- Prioridade (opcional, manual) --}}
-    @php($priority = $this->priority)
-    <div class="border-outline-variant/40 bg-surface-container-lowest mb-5 flex flex-wrap items-center gap-3 rounded-2xl border px-5 py-3 shadow-sm" wire:key="priority-strip">
-        <flux:icon name="flag" class="text-on-surface-variant size-5 shrink-0" />
-        <flux:heading>Prioridade</flux:heading>
-
-        @if ($priority)
-            <flux:badge :color="$priority->priority->badgeColor()">{{ $priority->priority->label() }}</flux:badge>
-            <flux:text class="min-w-0 flex-1">
-                {{ $priority->explanation }}
-                <span class="text-on-surface-variant">· {{ $priority->escalated ? 'escalada por regra' : 'score '.number_format($priority->score, 1, ',') }}</span>
-            </flux:text>
-            <flux:button size="sm" variant="ghost" icon="trash" wire:click="clearAssessment" aria-label="Limpar avaliação" />
-            <flux:button size="sm" variant="ghost" icon="arrow-path" wire:click="startAssessment">Reavaliar</flux:button>
-        @else
-            <flux:text class="text-on-surface-variant flex-1">Opcional. Responda algumas perguntas para medir a prioridade.</flux:text>
-            <flux:button size="sm" variant="primary" icon="flag" wire:click="startAssessment">Avaliar prioridade</flux:button>
-        @endif
+            <div class="space-y-2">
+                @forelse ($item->commits as $commit)
+                    <div wire:key="commit-{{ $commit->id }}" class="border-surface-variant flex items-start gap-3 rounded-lg border p-3">
+                        <flux:link href="{{ $commit->url }}" target="_blank" class="shrink-0 font-mono text-xs">{{ Str::substr($commit->sha, 0, 7) }}</flux:link>
+                        <div class="min-w-0 flex-1">
+                            <flux:text size="sm" class="truncate">{{ $commit->message }}</flux:text>
+                            <flux:text size="xs" class="text-on-surface-variant">{{ $commit->author }}@if ($commit->committed_at) · {{ $commit->committed_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}@endif</flux:text>
+                        </div>
+                        <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="detachCommit({{ $commit->id }})" aria-label="Desvincular commit" />
+                    </div>
+                @empty
+                    <flux:text size="sm" class="text-on-surface-variant">
+                        {{ $item->project?->githubRepository() ? 'Nenhum commit vinculado.' : 'Vincule o projeto a um repositório do GitHub para associar commits.' }}
+                    </flux:text>
+                @endforelse
+            </div>
+        </x-island>
     </div>
 
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -243,33 +275,6 @@
                     </div>
                 @empty
                     <flux:text size="sm" class="text-on-surface-variant">Nenhum arquivo. Registre os que você vai lapidar na IDE.</flux:text>
-                @endforelse
-            </div>
-        </x-island>
-
-        {{-- Commits do GitHub vinculados à demanda --}}
-        <x-island title="Commits" icon="link" wire:key="island-commits">
-            <x-slot:actions>
-                <flux:badge size="sm" color="zinc">{{ $item->commits->count() }}</flux:badge>
-                @if ($item->project?->githubRepository())
-                    <flux:button size="sm" icon="plus" wire:click="openCommitPicker">Vincular commit</flux:button>
-                @endif
-            </x-slot:actions>
-
-            <div class="space-y-2">
-                @forelse ($item->commits as $commit)
-                    <div wire:key="commit-{{ $commit->id }}" class="border-surface-variant flex items-start gap-3 rounded-lg border p-3">
-                        <flux:link href="{{ $commit->url }}" target="_blank" class="shrink-0 font-mono text-xs">{{ Str::substr($commit->sha, 0, 7) }}</flux:link>
-                        <div class="min-w-0 flex-1">
-                            <flux:text size="sm" class="truncate">{{ $commit->message }}</flux:text>
-                            <flux:text size="xs" class="text-on-surface-variant">{{ $commit->author }}@if ($commit->committed_at) · {{ $commit->committed_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}@endif</flux:text>
-                        </div>
-                        <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="detachCommit({{ $commit->id }})" aria-label="Desvincular commit" />
-                    </div>
-                @empty
-                    <flux:text size="sm" class="text-on-surface-variant">
-                        {{ $item->project?->githubRepository() ? 'Nenhum commit vinculado.' : 'Vincule o projeto a um repositório do GitHub para associar commits.' }}
-                    </flux:text>
                 @endforelse
             </div>
         </x-island>
