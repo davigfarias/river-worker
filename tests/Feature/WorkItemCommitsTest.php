@@ -51,6 +51,17 @@ test('a private repository without token fails with a helpful message', function
     expect($outcome->success)->toBeFalse()->and($outcome->message)->toContain('GITHUB_TOKEN');
 });
 
+test('a token without access is told apart from the rate limit', function (array $headers, string $expected) {
+    Http::fake(['api.github.com/*' => Http::response([], 403, $headers)]);
+
+    $outcome = app(ListRepositoryCommits::class)->handle(Project::factory()->create(['repository_url' => 'https://github.com/acme/app']));
+
+    expect($outcome->message)->toContain($expected);
+})->with([
+    'sem permissão' => [['X-RateLimit-Remaining' => '4999'], 'não tem acesso'],
+    'limite' => [['X-RateLimit-Remaining' => '0'], 'Limite de requisições'],
+]);
+
 test('the project page shows the repository commits', function () {
     Http::fake(['api.github.com/*' => Http::response([fakeGithubCommit('abc1234def', 'feat: login')])]);
     $project = Project::factory()->create(['repository_url' => 'https://github.com/acme/app']);

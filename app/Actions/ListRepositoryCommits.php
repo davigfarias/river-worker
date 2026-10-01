@@ -47,11 +47,18 @@ final readonly class ListRepositoryCommits
         } catch (RequestException $e) {
             Log::error(self::class.': '.$e->getMessage());
 
-            return Outcome::failure(message: match ($e->response->status()) {
-                404 => 'Repositório não encontrado. Se for privado, configure o GITHUB_TOKEN.',
-                403, 429 => 'Limite de requisições do GitHub atingido. Tente mais tarde ou configure o GITHUB_TOKEN.',
-                409 => 'O repositório ainda não tem commits.',
-                default => 'Não foi possível carregar os commits.',
+            // O GitHub usa 403 tanto para limite estourado quanto para token sem permissão.
+            $rateLimited = $e->response->status() === 429 || $e->response->header('X-RateLimit-Remaining') === '0';
+
+            return Outcome::failure(message: match (true) {
+                $rateLimited => 'Limite de requisições do GitHub atingido. Tente mais tarde ou configure o GITHUB_TOKEN.',
+                default => match ($e->response->status()) {
+                    401 => 'GITHUB_TOKEN inválido ou expirado.',
+                    403 => 'O GITHUB_TOKEN não tem acesso a este repositório. Libere o repositório e a permissão "Contents: read" no token.',
+                    404 => 'Repositório não encontrado. Se for privado, configure o GITHUB_TOKEN.',
+                    409 => 'O repositório ainda não tem commits.',
+                    default => 'Não foi possível carregar os commits.',
+                },
             });
         } catch (\Throwable $e) {
             Log::error(self::class.': '.$e->getMessage());
