@@ -2,6 +2,15 @@
     $navItems = [
         ['route' => 'dashboard', 'icon' => 'squares-2x2', 'label' => 'Foco', 'active' => ['dashboard', 'trabalho.*']],
         ['route' => 'projetos', 'icon' => 'folder', 'label' => 'Projetos', 'active' => ['projetos*']],
+        [
+            'route' => 'operacional.brag-document',
+            'icon' => 'trophy',
+            'label' => 'Operacional',
+            'active' => ['operacional*'],
+            'children' => [
+                ['route' => 'operacional.brag-document', 'icon' => 'trophy', 'label' => 'Brag document'],
+            ],
+        ],
         ['route' => 'principios', 'icon' => 'scale', 'label' => 'Princípios', 'active' => ['principios*']],
         ['route' => 'estudos', 'icon' => 'code-bracket-square', 'label' => 'Estudos', 'active' => ['estudos*']],
         ['route' => 'conceitos', 'icon' => 'light-bulb', 'label' => 'Conceitos', 'active' => ['conceitos*']],
@@ -46,14 +55,39 @@
     <flux:navbar class="max-md:hidden">
 
         @foreach ($navItems as $item)
-            <a href="{{ route($item['route']) }}" wire:navigate class="contents">
-                <flux:navbar.item
-                    :icon="$item['icon']"
-                    :current="request()->routeIs(...$item['active'])"
-                >
-                    {{ $item['label'] }}
-                </flux:navbar.item>
-            </a>
+            @if (isset($item['children']))
+                <flux:dropdown>
+                    <flux:navbar.item
+                        :icon="$item['icon']"
+                        icon:trailing="chevron-down"
+                        :current="request()->routeIs(...$item['active'])"
+                    >
+                        {{ $item['label'] }}
+                    </flux:navbar.item>
+
+                    <flux:navmenu>
+                        @foreach ($item['children'] as $child)
+                            <flux:navmenu.item
+                                :href="route($child['route'])"
+                                wire:navigate
+                                :icon="$child['icon']"
+                                :current="request()->routeIs($child['route'])"
+                            >
+                                {{ $child['label'] }}
+                            </flux:navmenu.item>
+                        @endforeach
+                    </flux:navmenu>
+                </flux:dropdown>
+            @else
+                <a href="{{ route($item['route']) }}" wire:navigate class="contents">
+                    <flux:navbar.item
+                        :icon="$item['icon']"
+                        :current="request()->routeIs(...$item['active'])"
+                    >
+                        {{ $item['label'] }}
+                    </flux:navbar.item>
+                </a>
+            @endif
         @endforeach
 
     </flux:navbar>
