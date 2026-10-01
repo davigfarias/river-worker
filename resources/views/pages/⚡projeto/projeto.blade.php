@@ -71,7 +71,12 @@
                 <a href="{{ route('trabalho.show', $item->id) }}" wire:navigate class="flex min-w-0 flex-1 items-center justify-between gap-3 py-3 pl-4">
                     <span class="flex min-w-0 items-center gap-2">
                         <flux:badge size="sm" :color="$item->kind->badgeColor()" class="font-mono">{{ $item->kind->value }}</flux:badge>
-                        <span class="truncate">{{ $item->title }}</span>
+                        <span class="min-w-0">
+                            <span class="block truncate">{{ $item->title }}</span>
+                            @if (filled($item->description))
+                                <span class="text-on-surface-variant mt-0.5 line-clamp-1 block text-xs">{{ Str::of(strip_tags(Str::markdown($item->description, ['html_input' => 'strip'])))->squish() }}</span>
+                            @endif
+                        </span>
                     </span>
                     <flux:badge size="sm" :color="$item->status->badgeColor()">{{ $item->status->label() }}</flux:badge>
                 </a>
