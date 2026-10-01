@@ -9,6 +9,7 @@
             'active' => ['operacional*'],
             'children' => [
                 ['route' => 'operacional.brag-document', 'icon' => 'trophy', 'label' => 'Brag document'],
+                ['route' => 'operacional.pdi', 'icon' => 'academic-cap', 'label' => 'PDI'],
             ],
         ],
         ['route' => 'principios', 'icon' => 'scale', 'label' => 'Princípios', 'active' => ['principios*']],

@@ -15,6 +15,7 @@ Route::middleware(EnsureAccessTokenIsValid::class)->group(function () {
     Route::livewire('/projetos/{slug}', 'pages::projeto')->name('projetos.show');
 
     Route::livewire('/operacional/brag-document', 'pages::brag-document')->name('operacional.brag-document');
+    Route::livewire('/operacional/pdi', 'pages::pdi')->name('operacional.pdi');
 
     Route::livewire('/principios', 'pages::principios')->name('principios');
     Route::livewire('/conceitos', 'pages::conceitos')->name('conceitos');
