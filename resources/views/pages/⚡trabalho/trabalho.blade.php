@@ -246,7 +246,75 @@
                 @endforelse
             </div>
         </x-island>
+
+        {{-- Commits do GitHub vinculados à demanda --}}
+        <x-island title="Commits" icon="link" wire:key="island-commits">
+            <x-slot:actions>
+                <flux:badge size="sm" color="zinc">{{ $item->commits->count() }}</flux:badge>
+                @if ($item->project?->githubRepository())
+                    <flux:button size="sm" icon="plus" wire:click="openCommitPicker">Vincular commit</flux:button>
+                @endif
+            </x-slot:actions>
+
+            <div class="space-y-2">
+                @forelse ($item->commits as $commit)
+                    <div wire:key="commit-{{ $commit->id }}" class="border-surface-variant flex items-start gap-3 rounded-lg border p-3">
+                        <flux:link href="{{ $commit->url }}" target="_blank" class="shrink-0 font-mono text-xs">{{ Str::substr($commit->sha, 0, 7) }}</flux:link>
+                        <div class="min-w-0 flex-1">
+                            <flux:text size="sm" class="truncate">{{ $commit->message }}</flux:text>
+                            <flux:text size="xs" class="text-on-surface-variant">{{ $commit->author }}@if ($commit->committed_at) · {{ $commit->committed_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}@endif</flux:text>
+                        </div>
+                        <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="detachCommit({{ $commit->id }})" aria-label="Desvincular commit" />
+                    </div>
+                @empty
+                    <flux:text size="sm" class="text-on-surface-variant">
+                        {{ $item->project?->githubRepository() ? 'Nenhum commit vinculado.' : 'Vincule o projeto a um repositório do GitHub para associar commits.' }}
+                    </flux:text>
+                @endforelse
+            </div>
+        </x-island>
     </div>
+
+    <flux:modal name="commit-picker" variant="flyout" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-lg">
+        @php($repositoryCommits = $this->repositoryCommits)
+        @php($linkedShas = $item->commits->pluck('sha'))
+        <div class="space-y-5" x-data="{ filter: '' }">
+            <div>
+                <flux:heading size="lg">Vincular commit</flux:heading>
+                <flux:text class="mt-2 font-mono">{{ $item->project?->githubRepository() }}</flux:text>
+            </div>
+
+            <flux:input icon="magnifying-glass" x-model="filter" placeholder="Filtrar por mensagem, autor ou sha..." />
+
+            @if ($repositoryCommits['error'])
+                <flux:callout icon="exclamation-triangle" variant="warning" :heading="$repositoryCommits['error']" />
+            @endif
+
+            <div class="space-y-2">
+                @foreach ($repositoryCommits['commits'] as $commit)
+                    @php($isLinked = $linkedShas->contains($commit['sha']))
+                    <button
+                        type="button"
+                        wire:key="pick-commit-{{ $commit['sha'] }}"
+                        wire:click="attachCommit('{{ $commit['sha'] }}')"
+                        @disabled($isLinked)
+                        x-show="@js(mb_strtolower($commit['sha'].' '.$commit['message'].' '.$commit['author'])).includes(filter.toLowerCase())"
+                        class="border-surface-variant hover:bg-surface-container-low focus-visible:outline-primary flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-start transition-colors focus-visible:outline-2 disabled:opacity-50"
+                    >
+                        <flux:icon :name="$isLinked ? 'check' : 'plus'" variant="micro" class="text-on-surface-variant mt-0.5 shrink-0" />
+                        <span class="min-w-0 flex-1">
+                            <span class="block truncate text-sm">{{ $commit['message'] }}</span>
+                            <span class="text-on-surface-variant block text-xs"><span class="font-mono">{{ Str::substr($commit['sha'], 0, 7) }}</span> · {{ $commit['author'] }}</span>
+                        </span>
+                    </button>
+                @endforeach
+            </div>
+
+            @if ($repositoryCommits['hasMore'])
+                <flux:button size="sm" variant="ghost" wire:click="loadMoreCommits" class="w-full">Carregar mais</flux:button>
+            @endif
+        </div>
+    </flux:modal>
 
     <flux:modal name="spec-questions" variant="flyout" class="w-full max-w-[calc(100vw-2rem)] sm:max-w-md">
         <div class="space-y-5">

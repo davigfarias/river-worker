@@ -74,6 +74,14 @@ class WorkItem extends Model
     }
 
     /**
+     * @return HasMany<WorkItemCommit, $this>
+     */
+    public function commits(): HasMany
+    {
+        return $this->hasMany(WorkItemCommit::class)->latest('committed_at');
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toSearchableArray(): array

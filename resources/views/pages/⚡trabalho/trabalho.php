@@ -1,9 +1,12 @@
 <?php
 
 use App\Actions\AddWorkFile;
+use App\Actions\AttachWorkItemCommit;
 use App\Actions\ChangeWorkItemStatus;
 use App\Actions\DeleteWorkFile;
 use App\Actions\DeleteWorkItem;
+use App\Actions\DetachWorkItemCommit;
+use App\Actions\ListRepositoryCommits;
 use App\Actions\RegisterDeploy;
 use App\Actions\ScoreWorkItem;
 use App\Actions\ToggleWorkFileReviewed;
@@ -73,7 +76,7 @@ new class extends Component
     #[Computed]
     public function item(): WorkItem
     {
-        return WorkItem::with(['project', 'steps', 'files'])->findOrFail($this->workItemId);
+        return WorkItem::with(['project', 'steps', 'files', 'commits'])->findOrFail($this->workItemId);
     }
 
     #[Computed]
@@ -292,6 +295,53 @@ new class extends Component
     public function removeFile(int $id, DeleteWorkFile $action): void
     {
         $this->item->files->firstWhere('id', $id) && $this->report($action->handle($id));
+    }
+
+    public bool $pickingCommits = false;
+
+    public int $commitPages = 1;
+
+    /**
+     * Commits do repositório do projeto; só consulta o GitHub com o seletor aberto.
+     *
+     * @return array{commits: list<array{sha: string, message: string, author: ?string, committed_at: ?string, url: string}>, hasMore: bool, error: ?string}
+     */
+    #[Computed]
+    public function repositoryCommits(): array
+    {
+        if (! $this->pickingCommits || ! $this->item->project) {
+            return ['commits' => [], 'hasMore' => false, 'error' => null];
+        }
+
+        $outcome = app(ListRepositoryCommits::class)->handle($this->item->project, $this->commitPages);
+
+        return $outcome->success
+            ? [...$outcome->data, 'error' => null]
+            : ['commits' => [], 'hasMore' => false, 'error' => $outcome->message];
+    }
+
+    public function openCommitPicker(): void
+    {
+        $this->pickingCommits = true;
+        $this->modal('commit-picker')->show();
+    }
+
+    public function loadMoreCommits(): void
+    {
+        $this->commitPages = min($this->commitPages + 1, ListRepositoryCommits::MAX_PAGES);
+    }
+
+    public function attachCommit(string $sha, AttachWorkItemCommit $action): void
+    {
+        // Os dados vêm do GitHub, não do cliente: só o sha é aceito.
+        $commit = collect($this->repositoryCommits['commits'])->firstWhere('sha', $sha);
+
+        $commit && $this->report($action->handle($this->workItemId, $commit));
+    }
+
+    public function detachCommit(int $id, DetachWorkItemCommit $action): void
+    {
+        $this->item->commits->firstWhere('id', $id) && $this->report($action->handle($id));
     }
 
     public function registerDeploy(RegisterDeploy $action): void

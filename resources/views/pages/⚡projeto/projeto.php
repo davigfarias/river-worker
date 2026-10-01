@@ -10,6 +10,7 @@ use App\Enums\WorkItemKind;
 use App\Enums\WorkItemStatus;
 use App\Models\Project;
 use App\Models\ProjectDoc;
+use App\Models\WorkItemCommit;
 use Flux\Flux;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
@@ -86,25 +87,30 @@ new class extends Component
     #[Computed]
     public function commits(): array
     {
-        $action = app(ListRepositoryCommits::class);
-        $commits = [];
+        $outcome = app(ListRepositoryCommits::class)->handle($this->project, $this->commitPages);
 
-        foreach (range(1, $this->commitPages) as $page) {
-            $outcome = $action->handle($this->project, $page);
+        return $outcome->success
+            ? [...$outcome->data, 'error' => null]
+            : ['commits' => [], 'hasMore' => false, 'error' => $outcome->message];
+    }
 
-            if (! $outcome->success) {
-                return ['commits' => $commits, 'error' => $outcome->message, 'hasMore' => false];
-            }
-
-            $commits = [...$commits, ...$outcome->data];
-        }
-
-        return ['commits' => $commits, 'error' => null, 'hasMore' => count($outcome->data) === ListRepositoryCommits::PER_PAGE];
+    /**
+     * Demandas vinculadas a cada commit do projeto, indexadas pelo sha.
+     *
+     * @return Collection<string, Collection<int, WorkItemCommit>>
+     */
+    #[Computed]
+    public function linkedCommits(): Collection
+    {
+        return WorkItemCommit::with('workItem')
+            ->whereIn('work_item_id', $this->project->workItems->modelKeys())
+            ->get()
+            ->groupBy('sha');
     }
 
     public function loadMoreCommits(): void
     {
-        $this->commitPages = min($this->commitPages + 1, 10);
+        $this->commitPages = min($this->commitPages + 1, ListRepositoryCommits::MAX_PAGES);
     }
 
     public function createWorkItem(CreateWorkItem $action): void

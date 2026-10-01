@@ -69,6 +69,11 @@
                         <flux:link href="{{ $commit['url'] }}" target="_blank" class="shrink-0 font-mono text-xs">{{ Str::substr($commit['sha'], 0, 7) }}</flux:link>
                         <span class="min-w-0 flex-1">
                             <span class="block truncate text-sm">{{ $commit['message'] }}</span>
+                            @foreach ($this->linkedCommits->get($commit['sha'], []) as $link)
+                                <a wire:key="commit-{{ $commit['sha'] }}-link-{{ $link->id }}" href="{{ route('trabalho.show', $link->work_item_id) }}" wire:navigate class="mt-1 inline-block">
+                                    <flux:badge size="sm" :color="$link->workItem->kind->badgeColor()" icon="link">{{ Str::limit($link->workItem->title, 40) }}</flux:badge>
+                                </a>
+                            @endforeach
                             <span class="text-on-surface-variant block text-xs">
                                 {{ $commit['author'] }}@if ($commit['committed_at']) · {{ \Illuminate\Support\Carbon::parse($commit['committed_at'])->timezone(config('app.timezone'))->format('d/m/Y H:i') }}@endif
                             </span>
