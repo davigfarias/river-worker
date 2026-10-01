@@ -44,20 +44,29 @@
 
             {{-- Prioridade (opcional, manual) --}}
             @php($priority = $this->priority)
-            <div class="border-outline-variant/40 bg-surface-container-lowest flex flex-wrap items-center gap-3 rounded-2xl border px-5 py-3 shadow-sm" wire:key="priority-strip">
+            <div class="border-outline-variant/40 bg-surface-container-lowest flex items-center gap-3 rounded-2xl border px-5 py-3 shadow-sm" wire:key="priority-strip">
                 <flux:icon name="flag" class="text-on-surface-variant size-5 shrink-0" />
-                <flux:heading>Prioridade</flux:heading>
+
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                        <flux:heading>Prioridade</flux:heading>
+                        @if ($priority)
+                            <flux:badge size="sm" :color="$priority->priority->badgeColor()">{{ $priority->priority->label() }}</flux:badge>
+                        @endif
+                    </div>
+                    <flux:text size="sm" class="text-on-surface-variant mt-0.5">
+                        @if ($priority)
+                            {{ $priority->explanation }} · {{ $priority->escalated ? 'escalada por regra' : 'score '.number_format($priority->score, 1, ',') }}
+                        @else
+                            Opcional. Responda algumas perguntas para medir a prioridade.
+                        @endif
+                    </flux:text>
+                </div>
 
                 @if ($priority)
-                    <flux:badge :color="$priority->priority->badgeColor()">{{ $priority->priority->label() }}</flux:badge>
-                    <flux:text class="min-w-0 flex-1">
-                        {{ $priority->explanation }}
-                        <span class="text-on-surface-variant">· {{ $priority->escalated ? 'escalada por regra' : 'score '.number_format($priority->score, 1, ',') }}</span>
-                    </flux:text>
                     <flux:button size="sm" variant="ghost" icon="trash" wire:click="clearAssessment" aria-label="Limpar avaliação" />
                     <flux:button size="sm" variant="ghost" icon="arrow-path" wire:click="startAssessment">Reavaliar</flux:button>
                 @else
-                    <flux:text class="text-on-surface-variant flex-1">Opcional. Responda algumas perguntas para medir a prioridade.</flux:text>
                     <flux:button size="sm" variant="primary" icon="flag" wire:click="startAssessment">Avaliar prioridade</flux:button>
                 @endif
             </div>
